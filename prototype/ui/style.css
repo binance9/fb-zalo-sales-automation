@@ -74,6 +74,23 @@ input, select, textarea { font-family: inherit; font-size: 14px; color: var(--te
 }
 .lang-select:hover { border-color: var(--primary); }
 .lang-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+
+/* ---- i18n PHASE-2: select "ngôn ngữ bot trả lời" trong card AI Settings ----
+   Cùng họ .lang-select (viền hồng khi focus) nhưng full-width trong form-row. */
+.set-lang-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border-gray);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+.set-lang-select:hover, .set-lang-select:focus { border-color: var(--primary); }
+.persona-hint { color: var(--text-faint); font-size: 12.5px; }
 .btn-bot {
   display: flex; align-items: center; gap: 8px;
   padding: 9px 16px; border-radius: 999px;

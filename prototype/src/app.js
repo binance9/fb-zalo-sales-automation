@@ -93,7 +93,9 @@ class App {
     // propose giữ SYNC nguyên trạng. opts.aiAsyncHttpFn: tiêm HTTP KHÔNG chặn (test đường
     // async — SURI ASYNC). Production: KHÔNG tiêm gì — đường LLM dùng httpOnceAsync (spawn
     // curl không sync), stub vẫn sync-instant. Mặc định app giữ nguyên như cũ.
-    this.ai = new SalesAI({ getConfig: getAiRuntime, httpFn: opts.aiHttpFn || null, asyncHttpFn: opts.aiAsyncHttpFn !== undefined ? opts.aiAsyncHttpFn : null });
+    // SURI MULTILANG: getReplyLang đọc settings shop 'persona_lang' (vi/en/zh/ko/hi/ja) FRESH
+    // mỗi tin — đổi ngôn ngữ trả lời của bot không cần restart; settings null/lỗi => 'vi'.
+    this.ai = new SalesAI({ getConfig: getAiRuntime, httpFn: opts.aiHttpFn || null, asyncHttpFn: opts.aiAsyncHttpFn !== undefined ? opts.aiAsyncHttpFn : null, getReplyLang: () => { try { return this.settings.get('persona_lang', 'vi'); } catch (e) { return 'vi'; } } });
 
     // P2 LIVE-INTEGRATION: chọn adapter BIÊN — opts.live = externals dựng sẵn (test tiêm trực tiếp),
     // không có thì build từ env (CHANNEL_MODE/SHIPPING_MODE; mặc định mock -> null).

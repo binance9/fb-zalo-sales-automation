@@ -32,6 +32,21 @@ function loadGuide() {
   try { return require('./guide-content'); } catch (e) { return null; }
 }
 
+// AICAKE i18n: guide theo ngôn ngữ UI (vi mặc định). loadGuideLang('ja') -> guide-content-ja.js;
+// file chưa có / lang lạ -> fallback bản VI (không lỗi).
+const GUIDE_LANGS = new Set(['en', 'zh', 'ko', 'hi', 'ja']);
+const guideLangCache = new Map();
+function loadGuideLang(lang) {
+  const key = GUIDE_LANGS.has(String(lang || '').toLowerCase()) ? String(lang).toLowerCase() : 'vi';
+  if (key === 'vi') return loadGuide();
+  if (guideLangCache.has(key)) return guideLangCache.get(key);
+  let g = null;
+  try { g = require('./guide-content-' + key); } catch (e) { g = null; }
+  if (!g || !Array.isArray(g.categories)) g = loadGuide();
+  guideLangCache.set(key, g);
+  return g;
+}
+
 // require phòng thủ — module phụ (ai-provider/live-http/sales-ai) hỏng thì LỚP 1 tự tắt,
 // lớp 2/3 vẫn sống (không bao giờ 500 vì phụ thuộc).
 function safeRequire(name) {
@@ -231,14 +246,17 @@ async function handleGuideRoutes(ctx, app) {
 
   if (p === '/api/guide') {
     if (req.method !== 'GET') return sendJson(res, 405, { ok: false, error: 'METHOD_NOT_ALLOWED' });
-    const guide = loadGuide();
+    // AICAKE i18n: ?lang=en|zh|ko|hi|ja — UI chuyển ngôn ngữ thì guide theo ngôn ngữ đó
+    const qLang = (() => { try { return new URL(req.url, 'http://x').searchParams.get('lang'); } catch (e) { return null; } })();
+    const guide = loadGuideLang(qLang);
     if (!guide) return sendJson(res, 503, { ok: false, error: 'GUIDE_NOT_READY' });
     return sendJson(res, 200, { ok: true, guide });
   }
 
   // ---- /api/guide/ask ---- (3 lớp, bọc kín — không bao giờ 500)
   if (req.method !== 'POST') return sendJson(res, 405, { ok: false, error: 'METHOD_NOT_ALLOWED' });
-  const guide = loadGuide();
+  const qLangBody = (() => { try { return new URL(req.url, 'http://x').searchParams.get('lang'); } catch (e) { return null; } })();
+  const guide = loadGuideLang(qLangBody);
   if (!guide) return sendJson(res, 503, { ok: false, error: 'GUIDE_NOT_READY' });
   try {
     let q = '';

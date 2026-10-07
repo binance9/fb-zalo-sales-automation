@@ -35,12 +35,31 @@ const state = {
   agentRunDetail: null,
   guide: {             // view "Hướng dẫn" (layout aicake) — dữ liệu từ GET /api/guide
     data: null,        // cache {version, product, categories:[…]} — fetch 1 lần, fail -> thông báo thử lại
+    lang: null,        // i18n: ngôn ngữ đã fetch guide ('data_'+lang) — setLang đổi lang sẽ refetch
     article: null,     // id bài đang mở (hash routing #guide/<id>)
     filter: null,      // id danh mục đang lọc ở trang chủ
     q: '',             // từ khóa tìm kiếm local
     asking: false,     // đang chờ POST /api/guide/ask
     i18nV: 0,          // i18n: setLang bump __i18nV -> vẽ lại shell guide
   },
+};
+
+// i18n helpers dùng chung: ngôn ngữ UI hiện tại (i18n.js expose window.i18nLang — fallback nhẹ),
+// nhãn ngôn ngữ BOT (native cho mọi UI language) và map tên bước wizard theo id.
+const LANG_LIST = ['vi', 'en', 'zh', 'ko', 'hi', 'ja'];
+function uiLang() {
+  if (typeof window.i18nLang === 'function') return window.i18nLang();
+  let l = null;
+  try { l = localStorage.getItem('sai_lang'); } catch (e) { /* private mode */ }
+  return LANG_LIST.indexOf(l) >= 0 ? l : 'vi';
+}
+const PERSONA_LANGS = [
+  ['vi', 'Tiếng Việt'], ['en', 'English'], ['zh', '中文'],
+  ['ko', '한국어'], ['hi', 'हिन्दी'], ['ja', '日本語'],
+];
+const WIZ_STEP_KEY = {
+  'shop-info': 'wiz.s1', facebook: 'wiz.s2', zalo: 'wiz.s3', products: 'wiz.s4',
+  shipping: 'wiz.s5', ai: 'wiz.s6', test: 'wiz.s7',
 };
 
 // Notification badge trên TITLE (đề bài: document.title = "(n) Inbox — ...").
@@ -308,7 +327,7 @@ async function renderOverview() {
           ${kenhRow('facebook')}
           ${kenhRow('zalo')}
           ${kenhRow('ghn')}
-          <div class="kv"><span class="k">Bot AI</span><span class="v"><span class="pill ${d.bot.on ? 'pill-green' : 'pill-gray'}"><span class="dot"></span>${d.bot.on ? t('ov.on') : t('ov.off')}</span></span></div>
+          <div class="kv"><span class="k">${t('ov.bot_ai')}</span><span class="v"><span class="pill ${d.bot.on ? 'pill-green' : 'pill-gray'}"><span class="dot"></span>${d.bot.on ? t('ov.on') : t('ov.off')}</span></span></div>
           <div class="kv"><span class="k">${t('ov.auto_reply')}</span><span class="v">${d.bot.autoReply ? t('ov.on_short') : t('ov.off_short')}</span></div>
           <div class="kv"><span class="k">${t('ov.takeover')}</span><span class="v">${t('ov.conv_unit', { n: d.takeoverCount })}</span></div>
           <div class="kv"><span class="k">${t('ov.send_errors')}</span><span class="v">send_failed: ${h.errors.send_failed} · DLQ: ${h.errors.dlq_count}</span></div>
@@ -404,12 +423,12 @@ async function renderAgentRuns(tabsHtml) {
   main.innerHTML = `
     ${tabsHtml}
     <div class="card">
-      <h2>Agent runs — vệt xử lý mỗi tin khách vào (UNDERSTAND → DECISION → SEND)</h2>
-      <small style="display:block;color:var(--text-faint);margin-bottom:8px">Bấm 1 dòng để xem chi tiết từng step. Nguồn: agent_runs/agent_steps trong DB shop (persist qua restart).</small>
+      <h2>${t('runs.title')}</h2>
+      <small style="display:block;color:var(--text-faint);margin-bottom:8px">${t('runs.hint')}</small>
       <div class="table-wrap">
         <table class="tbl">
-          <thead><tr><th>Run ID</th><th>Bắt đầu</th><th>Kênh</th><th>Khách</th><th>Intent</th><th>Quyết định</th><th>Trạng thái</th><th>Steps</th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="8" class="tbl-empty">Chưa có run nào — run xuất hiện khi khách nhắn tin</td></tr>'}</tbody>
+          <thead><tr><th>${t('runs.th_run')}</th><th>${t('runs.th_start')}</th><th>${t('runs.th_channel')}</th><th>${t('runs.th_customer')}</th><th>${t('runs.th_intent')}</th><th>${t('runs.th_decision')}</th><th>${t('ord.th_status')}</th><th>${t('runs.th_steps')}</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="8" class="tbl-empty">${t('runs.empty')}</td></tr>`}</tbody>
         </table>
       </div>
       <div id="runDetail" style="margin-top:12px"></div>
@@ -424,7 +443,7 @@ async function renderAgentRuns(tabsHtml) {
 async function showRunDetail(runId) {
   const box = $('#runDetail');
   if (!box) return;
-  box.innerHTML = '<span style="color:var(--text-faint)">đang tải run…</span>';
+  box.innerHTML = `<span style="color:var(--text-faint)">${t('runs.loading')}</span>`;
   try {
     const d = await api(`/api/agent/runs/${encodeURIComponent(runId)}`);
     const steps = (d.steps || []).map(s => {
@@ -435,10 +454,10 @@ async function showRunDetail(runId) {
     }).join('');
     box.innerHTML = `
       <div style="border:1.5px solid var(--border-gray);border-radius:10px;padding:12px">
-        <h3 style="margin:0 0 6px">Run <span style="font-family:monospace">${esc(runId)}</span>
+        <h3 style="margin:0 0 6px">${t('runs.run')}<span style="font-family:monospace">${esc(runId)}</span>
           <span class="pill ${RUN_CLS_CHECK(d.run.status)}"><span class="dot"></span>${esc(d.run.status)}</span></h3>
-        <small style="color:var(--text-faint)">Bắt đầu: ${esc(d.started_at_vn || d.run.started_at)} · Kết thúc: ${esc(d.ended_at_vn || d.run.ended_at || '—')} · Input: "${esc(d.run.input && d.run.input.text || '')}"</small>
-        <ol style="margin:10px 0 0 18px">${steps || '<li>không có step</li>'}</ol>
+        <small style="color:var(--text-faint)">${t('runs.started')}${esc(d.started_at_vn || d.run.started_at)} · ${t('runs.ended')}${esc(d.ended_at_vn || d.run.ended_at || '—')} · ${t('runs.input')}"${esc(d.run.input && d.run.input.text || '')}"</small>
+        <ol style="margin:10px 0 0 18px">${steps || `<li>${t('runs.no_steps')}</li>`}</ol>
       </div>`;
   } catch (e) {
     box.innerHTML = `<span style="color:var(--red)">${esc(e.message)}</span>`;
@@ -462,7 +481,7 @@ function chatColHtml(d) {
       meta.push(m.sender === 'agent' ? t('conv.sender_agent') : m.sender === 'bot' ? t('conv.sender_bot') : t('conv.sender_system'));
       if (m.delivery_status) meta.push(`<span class="dlv dlv-${esc(m.delivery_status)}">${dlvLabel(m.delivery_status)}</span>`);
     }
-    if (m.attachment) meta.push(m.attachment.type === 'voice' ? 'Voice (ASR)' : t('conv.photo'));
+    if (m.attachment) meta.push(m.attachment.type === 'voice' ? t('conv.voice_asr') : t('conv.photo'));
     return `
       <div class="msg-row ${isIn ? 'in' : 'out'}">
         <div class="bubble ${!isIn && m.sender === 'agent' ? 'from-agent' : ''}">
@@ -603,11 +622,11 @@ async function sendAgentMessage() {
       state.composerText = '';
       toast(t('conv.toast_sent') + (r.delivery_status ? ` (${dlvLabel(r.delivery_status)})` : ''));
     } else {
-      toast(t('conv.toast_reject') + ' ' + (r.reason || 'không rõ lý do'), true);
+      toast(t('conv.toast_reject') + ' ' + (r.reason || t('conv.no_reason')), true);
     }
     renderConversations();
   } catch (e) {
-    toast('Lỗi gửi: ' + e.message, true);
+    toast(t('conv.send_err') + e.message, true);
   }
 }
 
@@ -659,7 +678,7 @@ async function openOrderDrawer(orderId) {
   const items = (o.items || []).map(i => `
     <tr><td>${esc(i.name)}</td><td>${esc(i.sku)}</td><td class="num">${i.qty}</td><td class="num">${fmtVND(i.unit_price)}</td><td class="num">${fmtVND(i.line_total)}</td></tr>`).join('');
   const hist = (o.history || []).map(hh => `
-    <div class="tl-item"><span class="tl-time">${fmtTime(hh.at)}</span><span>${esc(hh.from || '—')} → <strong>${esc(hh.to)}</strong>${hh.actor ? ` <small style="color:var(--text-faint)">(bởi ${esc(hh.actor)}${hh.reason ? ': ' + esc(hh.reason) : ''})</small>` : ''}</span></div>`).join('');
+    <div class="tl-item"><span class="tl-time">${fmtTime(hh.at)}</span><span>${esc(hh.from || '—')} → <strong>${esc(hh.to)}</strong>${hh.actor ? ` <small style="color:var(--text-faint)">(${t('misc.by')}${esc(hh.actor)}${hh.reason ? ': ' + esc(hh.reason) : ''})</small>` : ''}</span></div>`).join('');
   const audit = (o.audit || []).map(a => `
     <div class="audit-line"><strong>${esc(a.stage)}</strong> · ${esc(a.proposed_action || '')} → ${esc(a.execution_result || '')} <span style="color:var(--text-faint)">· ${fmtTime(a.at)}</span></div>`).join('');
   // i18n: nhãn gốc các nút drawer — "XÁC NHẬN ĐƠN", "RETRY HỦY QUA ĐVVC", "RETRY GỬI HÀNG",
@@ -700,16 +719,16 @@ async function openOrderDrawer(orderId) {
             <span class="k">${t('ord.th_status')}</span><span class="v">${esc(o.shipment.status)} (${esc(o.shipment.carrier)})</span>
             <span class="k">${t('ord.k_created')}</span><span class="v">${fmtTime(o.shipment.created_at)}</span>
           </div>`
-        : (o.status === 'DRAFT' ? '<span style="color:var(--text-faint)">Đơn nháp — chưa tạo vận đơn. Giữ chỗ hết hạn: ' + fmtTime(o.draft_expires_at) + '</span>' : '<span style="color:var(--text-faint)">' + t('ord.no_shipment') + '</span>')}
-      ${o.status === 'CANCELLED' ? `<div style="margin-top:8px;color:var(--red)">Đã hủy · bởi ${esc(o.cancel_actor || '—')} · ${esc(o.cancel_reason || '')} · ${fmtTime(o.cancel_at)}</div>` : ''}
-      ${o.status === 'CANCEL_PENDING' ? `<div style="margin-top:8px;color:var(--amber)">Đang chờ ĐVVC xác nhận hủy: ${esc(o.cancel_carrier_reason || '')}</div>` : ''}
+        : (o.status === 'DRAFT' ? `<span style="color:var(--text-faint)">${t('ord.draft_ship_note')}${fmtTime(o.draft_expires_at)}</span>` : `<span style="color:var(--text-faint)">${t('ord.no_shipment')}</span>`)}
+      ${o.status === 'CANCELLED' ? `<div style="margin-top:8px;color:var(--red)">${t('ord.cancelled_line')}${esc(o.cancel_actor || '—')} · ${esc(o.cancel_reason || '')} · ${fmtTime(o.cancel_at)}</div>` : ''}
+      ${o.status === 'CANCEL_PENDING' ? `<div style="margin-top:8px;color:var(--amber)">${t('ord.cancel_pending_line')}${esc(o.cancel_carrier_reason || '')}</div>` : ''}
     </div>
     <div class="drawer-sec"><h3>${t('ord.sect_history')}</h3><div class="timeline">${hist || `<span style="color:var(--text-faint)">${t('ord.none')}</span>`}</div></div>
     <div class="drawer-sec"><h3>${t('ord.sect_audit')}</h3>${audit || `<span style="color:var(--text-faint)">${t('ord.none')}</span>`}</div>
     <div class="drawer-actions">
       ${o.status === 'DRAFT' ? `<button class="btn btn-primary" id="btnConfirmOrder" data-order="${esc(o.order_id)}">${t('ord.btn_confirm')}</button>` : ''}
-      ${o.status === 'CANCEL_PENDING' ? `<button class="btn" id="btnRetryShipping" data-order="${esc(o.order_id)}" title="Gọi lại hủy vận đơn qua ĐVVC (đúng flow P3B)">${t('ord.btn_retry_cancel')}</button>` : ''}
-      ${o.status === 'CONFIRMED' && !o.shipment ? `<button class="btn" id="btnRetryShipping" data-order="${esc(o.order_id)}" title="Gọi lại bước gửi hàng (reconcile — KHÔNG tạo trùng vận đơn)">${t('ord.btn_retry_ship')}</button>` : ''}
+      ${o.status === 'CANCEL_PENDING' ? `<button class="btn" id="btnRetryShipping" data-order="${esc(o.order_id)}" title="${t('ord.ttl_retry_cancel')}">${t('ord.btn_retry_cancel')}</button>` : ''}
+      ${o.status === 'CONFIRMED' && !o.shipment ? `<button class="btn" id="btnRetryShipping" data-order="${esc(o.order_id)}" title="${t('ord.ttl_retry_ship')}">${t('ord.btn_retry_ship')}</button>` : ''}
       ${['DRAFT', 'CONFIRMED'].includes(o.status) ? `<button class="btn-danger btn" id="btnCancelOrder" data-order="${esc(o.order_id)}">${t('ord.btn_cancel')}</button>` : ''}
       <button class="btn" id="btnViewConv">${t('ord.btn_open_conv')}</button>
     </div>`;
@@ -718,34 +737,34 @@ async function openOrderDrawer(orderId) {
   $('#drawerClose').addEventListener('click', closeDrawer);
   const btnConfirm = $('#btnConfirmOrder');
   if (btnConfirm) btnConfirm.addEventListener('click', async () => {
-    if (!confirm(`Chốt đơn ${o.order_code}? Hệ thống re-validate tồn/giá MỚI NHẤT rồi mới commit (pha B).`)) return;
+    if (!confirm(t('misc.confirm_order', { code: o.order_code }))) return;
     try {
       const r = await api(`/api/orders/${encodeURIComponent(o.order_id)}/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      toast(r.ok ? (r.shipment ? `Đã chốt ${r.order.order_code} — vận đơn ${r.shipment.tracking_number}` : `Đã chốt ${r.order.order_code} (đang chờ vận đơn)`) : 'Chưa chốt được', r.ok ? false : true);
+      toast(r.ok ? (r.shipment ? t('misc.confirmed_track', { code: r.order.order_code, tracking: r.shipment.tracking_number }) : t('misc.confirmed_wait', { code: r.order.order_code })) : t('misc.confirm_fail'), r.ok ? false : true);
       closeDrawer();
       renderOrders();
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   });
   const btnRetry = $('#btnRetryShipping');
   if (btnRetry) btnRetry.addEventListener('click', async () => {
-    if (!confirm('Gọi lại bước gửi/hủy vận đơn qua ĐVVC (đúng luồng engine, không sửa DB trực tiếp)?')) return;
+    if (!confirm(t('misc.confirm_retry'))) return;
     try {
       const r = await api(`/api/orders/${encodeURIComponent(o.order_id)}/retry-shipping`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      toast(r.ok ? `Đã retry — đơn ${r.order.status}` : `Chưa được: ${r.reason || r.error}`, r.ok ? false : true);
+      toast(r.ok ? t('misc.retried', { status: r.order.status }) : t('misc.retry_fail') + (r.reason || r.error), r.ok ? false : true);
       closeDrawer();
       renderOrders();
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   });
   const btnCancel = $('#btnCancelOrder');
   if (btnCancel) btnCancel.addEventListener('click', async () => {
-    if (!confirm(`Hủy đơn ${o.order_code}? Hệ thống sẽ hoàn tồn / hủy vận đơn qua ĐVVC đúng luồng P3B.`)) return;
+    if (!confirm(t('misc.confirm_cancel', { code: o.order_code }))) return;
     try {
       const r = await api(`/api/orders/${encodeURIComponent(o.order_id)}/cancel`, { method: 'POST' });
-      if (r.ok) toast(`Đã hủy ${r.order.order_code}${r.viaCarrier ? ' (kèm hủy vận đơn qua ĐVVC)' : ''}`);
-      else toast('Chưa hủy được: ' + (r.reason || 'đang chờ xử lý'), true);
+      if (r.ok) toast(t('misc.cancelled', { code: r.order.order_code }) + (r.viaCarrier ? t('misc.cancelled_carrier') : ''));
+      else toast(t('misc.cancel_fail') + (r.reason || t('misc.cancel_wait')), true);
       closeDrawer();
       renderOrders();
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   });
   $('#btnViewConv').addEventListener('click', () => {
     closeDrawer();
@@ -779,9 +798,9 @@ async function renderProducts() {
       <td class="num">${totalStock > 0 ? t('prd.in_stock', { n: `<strong>${totalStock}</strong>` }) : `<span style="color:var(--red)">${t('prd.out_of_stock')}</span>`}</td>
       <td><span class="pill ${p.enabled ? 'pill-green' : 'pill-gray'}"><span class="dot"></span>${p.enabled ? t('prd.active') : t('prd.paused')}</span></td>
       <td style="white-space:nowrap">
-        <button class="switch ${p.enabled ? 'on' : ''}" data-toggle="${esc(p.sku_base)}" title="${p.enabled ? 'Tắt bán' : 'Bật bán'}"></button>
+        <button class="switch ${p.enabled ? 'on' : ''}" data-toggle="${esc(p.sku_base)}" title="${p.enabled ? t('misc.ttl_pause') : t('misc.ttl_resume')}"></button>
         <button class="btn" style="margin-left:8px" data-edit="${esc(p.sku_base)}">${t('prd.btn_edit')}</button>
-        <button class="btn btn-danger" style="margin-left:8px" data-delete="${esc(p.sku_base)}" title="Xóa mềm (tắt bán vĩnh viễn khỏi bot)">${t('prd.btn_delete')}</button>
+        <button class="btn btn-danger" style="margin-left:8px" data-delete="${esc(p.sku_base)}" title="${t('misc.ttl_soft_del')}">${t('prd.btn_delete')}</button>
       </td>
     </tr>`;
   }).join('');
@@ -812,12 +831,12 @@ async function renderProducts() {
   document.querySelectorAll('[data-delete]').forEach(b =>
     b.addEventListener('click', async () => {
       const p = state.products.find(x => x.sku_base === b.dataset.delete);
-      if (!confirm(`Xóa mềm "${p.name}"? Sản phẩm tắt sẽ KHÔNG còn được bot tư vấn (đơn cũ vẫn đọc được).`)) return;
+      if (!confirm(t('misc.del_confirm', { name: p.name }))) return;
       try {
         await api(`/api/products/${encodeURIComponent(p.sku_base)}`, { method: 'DELETE' });
-        toast(`Đã xóa mềm "${p.name}" — bot không còn match sản phẩm này`);
+        toast(t('misc.del_done', { name: p.name }));
         renderProducts();
-      } catch (e) { toast('Lỗi: ' + e.message, true); }
+      } catch (e) { toast(t('misc.err') + e.message, true); }
     }));
   document.querySelectorAll('[data-toggle]').forEach(b =>
     b.addEventListener('click', async () => {
@@ -828,9 +847,9 @@ async function renderProducts() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ enabled: !p.enabled }),
         });
-        toast(p.enabled ? `Đã tắt bán "${p.name}"` : `Đã bật bán "${p.name}"`);
+        toast(p.enabled ? t('misc.toast_paused', { name: p.name }) : t('misc.toast_resumed', { name: p.name }));
         renderProducts();
-      } catch (e) { toast('Lỗi: ' + e.message, true); }
+      } catch (e) { toast(t('misc.err') + e.message, true); }
     }));
 }
 
@@ -838,13 +857,12 @@ function openImportModal() {
   const modal = $('#modalBox');
   modal.innerHTML = `
     <h2>${t('prd.import_title')}</h2>
-    <p style="font-size:13px;color:var(--text-light);margin-bottom:10px">
-      Cột: <code>name,sku,price,stock,size,color,weight</code> — dòng đầu là header. Dòng lỗi sẽ được báo, không chặn dòng hợp lệ.</p>
-    <div class="form-row"><textarea id="csvText" rows="10" style="width:100%;padding:10px;border:1.5px solid var(--border-gray);border-radius:10px;font-family:Consolas,monospace;font-size:13px" placeholder="name,sku,price,stock,size,color,weight&#10;Nến thơm cam,NT-CAM,155000,10,M,cam,250"></textarea></div>
+    <p style="font-size:13px;color:var(--text-light);margin-bottom:10px">${t('misc.csv_note')}</p>
+    <div class="form-row"><textarea id="csvText" rows="10" style="width:100%;padding:10px;border:1.5px solid var(--border-gray);border-radius:10px;font-family:Consolas,monospace;font-size:13px" placeholder="${esc(t('misc.csv_ph'))}"></textarea></div>
     <div id="csvResult" style="font-size:13px;margin-bottom:8px"></div>
     <div class="modal-actions">
       <button class="btn" id="csvCancel">${t('prd.close')}</button>
-      <button class="btn btn-primary" id="csvImport">Import</button>
+      <button class="btn btn-primary" id="csvImport">${t('misc.import_btn')}</button>
     </div>`;
   $('#modalOverlay').classList.remove('hidden');
   $('#csvCancel').addEventListener('click', closeModal);
@@ -854,10 +872,10 @@ function openImportModal() {
       const r = await api('/api/products/import', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv }),
       });
-      const errs = (r.errors || []).map(e => `dòng ${e.line !== null && e.line !== undefined ? e.line : '?'}: ${esc(e.error)}`).join('<br>');
-      $('#csvResult').innerHTML = `<span style="color:var(--green)">Đã import ${r.imported} sản phẩm</span>${r.failed ? ` · <span style="color:var(--red)">${r.failed} dòng lỗi</span><br>${errs}` : ''}`;
-      if (!r.failed) { toast(`Đã import ${r.imported} sản phẩm`); closeModal(); renderProducts(); }
-    } catch (e) { $('#csvResult').innerHTML = `<span style="color:var(--red)">Lỗi: ${esc(e.message)}</span>`; }
+      const errs = (r.errors || []).map(e => t('misc.import_line', { n: e.line !== null && e.line !== undefined ? e.line : '?' }) + esc(e.error)).join('<br>');
+      $('#csvResult').innerHTML = `<span style="color:var(--green)">${t('misc.imported', { n: r.imported })}</span>${r.failed ? ` · <span style="color:var(--red)">${t('misc.import_failed', { n: r.failed })}</span><br>${errs}` : ''}`;
+      if (!r.failed) { toast(t('misc.imported', { n: r.imported })); closeModal(); renderProducts(); }
+    } catch (e) { $('#csvResult').innerHTML = `<span style="color:var(--red)">${t('misc.err')}${esc(e.message)}</span>`; }
   });
 }
 
@@ -867,17 +885,17 @@ function openProductModal(skuBase) {
   const modal = $('#modalBox');
   modal.innerHTML = `
     <h2>${p ? t('prd.modal_edit') : t('prd.modal_add')}</h2>
-    <div class="form-row"><label>${t('prd.lbl_name')}</label><input id="pfName" value="${esc(p ? p.name : '')}" placeholder="VD: Nến thơm s candle"></div>
-    ${p ? '' : '<div class="form-row"><label>SKU gốc (sku_base)</label><input id="pfSku" placeholder="VD: NEN-S-CANDLE"></div>'}
+    <div class="form-row"><label>${t('prd.lbl_name')}</label><input id="pfName" value="${esc(p ? p.name : '')}" placeholder="${esc(t('misc.pf_ph_name'))}"></div>
+    ${p ? '' : `<div class="form-row"><label>${t('misc.pf_sku')}</label><input id="pfSku" placeholder="${esc(t('misc.pf_ph_sku'))}"></div>`}
     <div class="form-2col">
       <div class="form-row"><label>${t('prd.lbl_price')}</label><input id="pfPrice" type="number" min="0" value="${p ? v0.price || '' : ''}"></div>
       <div class="form-row"><label>${t('prd.lbl_stock')}</label><input id="pfStock" type="number" min="0" value="${p ? v0.stock_qty || 0 : 0}"></div>
     </div>
     ${p ? '' : `<div class="form-2col">
-      <div class="form-row"><label>${t('prd.lbl_size')}</label><input id="pfSize" placeholder="S / M / hộp 50g…"></div>
-      <div class="form-row"><label>${t('prd.lbl_color')}</label><input id="pfColor" placeholder="đỏ / trắng…"></div>
+      <div class="form-row"><label>${t('prd.lbl_size')}</label><input id="pfSize" placeholder="${esc(t('misc.pf_ph_size'))}"></div>
+      <div class="form-row"><label>${t('prd.lbl_color')}</label><input id="pfColor" placeholder="${esc(t('misc.pf_ph_color'))}"></div>
     </div>`}
-    <div class="form-row"><label>${t('prd.lbl_alias')}</label><input id="pfAliases" value="${esc(p ? (p.aliases || []).join(', ') : '')}" placeholder="candle thơm, nen thom"></div>
+    <div class="form-row"><label>${t('prd.lbl_alias')}</label><input id="pfAliases" value="${esc(p ? (p.aliases || []).join(', ') : '')}" placeholder="${esc(t('misc.pf_ph_alias'))}"></div>
     <div class="modal-actions">
       <button class="btn" id="pfCancel">${t('prd.cancel')}</button>
       <button class="btn btn-primary" id="pfSave">${p ? t('prd.save') : t('prd.add_short')}</button>
@@ -897,17 +915,17 @@ function openProductModal(skuBase) {
         await api(`/api/products/${encodeURIComponent(p.sku_base)}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
         });
-        toast('Đã lưu sản phẩm');
+        toast(t('misc.saved_product'));
       } else {
         body.sku_base = ($('#pfSku').value || '').trim();
         body.size = ($('#pfSize').value || '').trim();
         body.color = ($('#pfColor').value || '').trim();
-        if (!body.sku_base) { toast('Cần nhập SKU gốc', true); return; }
-        if (!Number.isFinite(body.price) || body.price <= 0) { toast('Giá phải là số > 0', true); return; }
+        if (!body.sku_base) { toast(t('misc.need_sku'), true); return; }
+        if (!Number.isFinite(body.price) || body.price <= 0) { toast(t('misc.need_price'), true); return; }
         await api('/api/products', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
         });
-        toast('Đã thêm sản phẩm vào catalogue');
+        toast(t('misc.added_product'));
       }
       closeModal();
       renderProducts();
@@ -956,7 +974,7 @@ async function openCustomerDrawer(customerId) {
   const c = d.customer;
   const convs = (d.conversations || []).map(cv => `
     <div class="set-row">
-      <span class="label"><strong>${chanIcon(cv.channel)} ${esc(cv.id)}</strong><small>${stateLabel(cv.state)}${cv.claim ? ' · khiếu nại: ' + esc(cv.claim.reason) : ''}</small></span>
+      <span class="label"><strong>${chanIcon(cv.channel)} ${esc(cv.id)}</strong><small>${stateLabel(cv.state)}${cv.claim ? ' · ' + t('cus.claim_short') + esc(cv.claim.reason) : ''}</small></span>
       <button class="btn" data-openconv="${esc(cv.id)}">${t('ord.btn_open_conv')}</button>
     </div>`).join('');
   const orders = (d.orders || []).map(o => `
@@ -980,7 +998,7 @@ async function openCustomerDrawer(customerId) {
       </div>
     </div>
     <div class="drawer-sec"><h3>${t('cus.sect_convs')}</h3>${convs || `<span style="color:var(--text-faint)">${t('ord.none')}</span>`}</div>
-    <div class="drawer-sec"><h3>${t('cus.sect_orders', { n: (d.orders || []).length })}</h3>${orders || '<span style="color:var(--text-faint)">Chưa có đơn</span>'}</div>`;
+    <div class="drawer-sec"><h3>${t('cus.sect_orders', { n: (d.orders || []).length })}</h3>${orders || `<span style="color:var(--text-faint)">${t('cus.no_orders')}</span>`}</div>`;
   drawer.classList.remove('hidden');
   $('#drawerOverlay').classList.remove('hidden');
   $('#drawerClose').addEventListener('click', closeDrawer);
@@ -998,7 +1016,7 @@ async function openCustomerDrawer(customerId) {
 // gemini, grok, kimi). Provider hiện tại luôn được giữ trong danh sách.
 function aiProviderOptions(aiStatusBody, current) {
   const FALLBACK = [
-    { id: 'local', label: 'Local (stub — không gọi mạng)' },
+    { id: 'local', label: t('ai.local_stub') },
     { id: 'deepseek', label: 'DeepSeek' },
     { id: 'openai', label: 'OpenAI' },
     { id: 'gemini', label: 'Gemini' },
@@ -1010,7 +1028,7 @@ function aiProviderOptions(aiStatusBody, current) {
   let list = Array.isArray(raw)
     ? raw.map(p => {
       if (typeof p === 'string') return { id: p, label: p };
-      if (p && p.id) return { id: p.id, label: p.name || (p.id + (p.defaultModel ? ' — mặc định: ' + p.defaultModel : '')) };
+      if (p && p.id) return { id: p.id, label: p.name || (p.id + t('set.provider_default') + p.defaultModel) };
       return null;
     }).filter(Boolean)
     : [];
@@ -1033,10 +1051,10 @@ async function saveCommentSwitches(next) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(next),
     });
-    toast('Đã lưu công tắc bình luận (pipeline đọc settings FRESH — hiệu lực ngay)');
+    toast(t('set.toast_cmt_saved'));
     renderSettings();
   } catch (e) {
-    toast('Chưa lưu được: ' + e.message, true);
+    toast(t('misc.save_fail') + e.message, true);
   }
 }
 
@@ -1048,19 +1066,19 @@ async function loadTeamBox() {
   try {
     const r = await api('/api/auth/users');
     const users = r.users || [];
-    const ROLE_LABEL = { OWNER: 'OWNER — chủ shop', ADMIN: 'ADMIN — quản trị', AGENT: 'AGENT — nhân viên bán' };
+    const ROLE_LABEL = { OWNER: 'set.role_owner', ADMIN: 'set.role_admin', AGENT: 'set.role_agent' };
     box.innerHTML = (users.map(u => `
       <div class="set-row">
-        <span class="label"><strong>${esc(u.email)}</strong><small>thêm vào ${esc(fmtTime(u.created_at))}</small></span>
-        <span class="pill ${u.role === 'OWNER' ? 'pill-green' : 'pill-gray'}"><span class="dot"></span>${esc(ROLE_LABEL[u.role] || u.role)}</span>
-      </div>`).join('')) || '<span style="color:var(--text-faint)">Chưa có thành viên nào</span>';
+        <span class="label"><strong>${esc(u.email)}</strong><small>${t('set.added', { time: esc(fmtTime(u.created_at)) })}</small></span>
+        <span class="pill ${u.role === 'OWNER' ? 'pill-green' : 'pill-gray'}"><span class="dot"></span>${esc(ROLE_LABEL[u.role] ? t(ROLE_LABEL[u.role]) : u.role)}</span>
+      </div>`).join('')) || `<span style="color:var(--text-faint)">${t('set.no_members')}</span>`;
     const fw = $('#teamFormWrap');
     if (fw) fw.style.display = 'block';
   } catch (e) {
     if (e.status === 403) {
-      box.innerHTML = '<div style="color:var(--text-faint);font-size:14px;padding:6px 0">Bạn không đủ quyền quản lý thành viên (403) — chỉ OWNER/ADMIN.</div>';
+      box.innerHTML = `<div style="color:var(--text-faint);font-size:14px;padding:6px 0">${t('set.no_team_perm')}</div>`;
     } else {
-      box.innerHTML = `<div style="color:var(--red);font-size:14px;padding:6px 0">Không tải được danh sách thành viên: ${esc(e.message)}</div>`;
+      box.innerHTML = `<div style="color:var(--red);font-size:14px;padding:6px 0">${t('set.team_fail')}${esc(e.message)}</div>`;
     }
   }
 }
@@ -1086,8 +1104,8 @@ async function renderSettings() {
     const k = (h.providers && h.providers[name]) || d.kenh[name] || {};
     const lbl = k.status_label || (k.connected ? 'CONNECTED' : 'DISCONNECTED');
     const mock = k.mode !== 'live';
-    const errHint = k.last_error_type ? ` · lỗi gần nhất: ${k.last_error_type}` : '';
-    const sub = mock ? 'Mock adapter (prototype — chưa nối API thật)' : `Live adapter${errHint}`;
+    const errHint = k.last_error_type ? ` · ${t('set.recent_err')}${k.last_error_type}` : '';
+    const sub = mock ? t('set.mock_adapter') : t('set.live_adapter') + errHint;
     return `
       <div class="set-row">
         <span class="label"><strong>${esc(label)}</strong><small>${esc(sub)}</small></span>
@@ -1106,6 +1124,8 @@ async function renderSettings() {
     hide_negative_comment: boolishSetting(ck.hide_negative_comment),
     auto_inbox_from_comment: boolishSetting(ck.auto_inbox_from_comment),
   };
+  // Công tắc ngôn ngữ BOT trả lời khách (persona_lang) — đọc config_keys, mặc định 'vi'.
+  const personaLangCur = PERSONA_LANGS.some(([v]) => v === ck.persona_lang) ? ck.persona_lang : 'vi';
   const saveCmt = () => saveCommentSwitches({
     auto_reply_comment: $('#swAutoReplyComment').classList.contains('on'),
     hide_negative_comment: $('#swHideNegativeComment').classList.contains('on'),
@@ -1118,46 +1138,52 @@ async function renderSettings() {
     </div>
     <div class="set-grid">
       <div class="card"><h2>${t('set.card_channels')}</h2>
-        ${kenhRow('facebook', 'Facebook Messenger')}
-        ${kenhRow('zalo', 'Zalo OA')}
-        ${kenhRow('ghn', 'GHN (đơn vị vận chuyển)')}
+        ${kenhRow('facebook', t('set.chan_fb'))}
+        ${kenhRow('zalo', t('set.chan_zalo'))}
+        ${kenhRow('ghn', t('set.chan_ghn'))}
       </div>
       <div class="card"><h2>${t('set.card_ai')}</h2>
-        <div class="set-row"><span class="label"><strong>Provider</strong><small>${ai.model ? esc(ai.model) : t('set.not_configured')}</small></span>
+        <div class="set-row"><span class="label"><strong>${t('set.provider')}</strong><small>${ai.model ? esc(ai.model) : t('set.not_configured')}</small></span>
           <span class="pill ${ai.status === 'ONLINE' ? 'pill-green' : ai.status === 'ERROR' ? 'pill-red' : 'pill-gray'}"><span class="dot"></span>${esc(ai.status || 'DISABLED')}</span></div>
-        <div class="set-row"><span class="label"><strong>AI viết lời tư vấn</strong><small>SURI P2: bật = DeepSeek viết câu tư vấn trên FACTS (giá/tồn vẫn từ DB, Gate vẫn chặn số sai) · tắt = template FAQ stub</small></span>
+        <div class="set-row"><span class="label"><strong>${t('set.ai_write')}</strong><small>${t('set.ai_write_desc')}</small></span>
           <button class="switch ${ai.use_for_replies !== false ? 'on' : ''}" id="setAiUseReplies"></button></div>
-        <div class="set-row"><span class="label"><strong>API key</strong><small>chỉ lưu masked — không trả key ra browser</small></span><span class="v">${esc(ai.api_key_masked || '(empty)')}</span></div>
-        <div class="set-row"><span class="label"><strong>last_error</strong><small>${ai.last_success ? 'last_success: ' + esc(ai.last_success) : 'chưa test'}</small></span><span class="v" style="color:${ai.last_error ? 'var(--red)' : 'inherit'};font-size:12.5px">${esc(ai.last_error || '—')}</span></div>
+        <div class="set-row"><span class="label"><strong>${t('set.api_key')}</strong><small>${t('set.api_key_desc')}</small></span><span class="v">${esc(ai.api_key_masked || t('set.empty'))}</span></div>
+        <div class="set-row"><span class="label"><strong>${t('set.last_error')}</strong><small>${ai.last_success ? t('set.last_success') + esc(ai.last_success) : t('set.never_tested')}</small></span><span class="v" style="color:${ai.last_error ? 'var(--red)' : 'inherit'};font-size:12.5px">${esc(ai.last_error || '—')}</span></div>
         <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
           <button class="btn" id="btnAiTest">${t('set.test_ai')}</button>
           <button class="btn" id="btnAiConfig">${t('set.ai_config')}</button>
           <button class="btn" id="btnWireDeepseek">${t('set.wire_ds')}</button>
-          <span id="wireOut" style="font-size:12.5px;align-self:center">đọc key từ provider config ngoài — key không bao giờ hiển thị</span>
+          <span id="wireOut" style="font-size:12.5px;align-self:center">${t('set.wire_note')}</span>
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <label for="personaLang">${t('set.persona_lang')}</label>
+          <select id="personaLang" class="set-lang-select" aria-label="${t('set.persona_lang')}">${PERSONA_LANGS.map(([v, n]) =>
+            `<option value="${v}"${personaLangCur === v ? ' selected' : ''}>${n}</option>`).join('')}</select>
+          <small class="persona-hint" style="display:block;margin-top:4px">${t('set.persona_note')}</small>
         </div>
         <div id="aiCfgBox" style="display:none;margin-top:10px">
-          <div class="form-row"><label>Provider (danh sách đọc động từ /api/ai/status)</label>
+          <div class="form-row"><label>${t('set.provider_dyn')}</label>
             <select id="aiProvider" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px">${aiProviderOptions(aiSt, ai.provider)}</select></div>
-          <div class="form-row"><label>API key (bỏ trống = giữ key cũ)</label><input id="aiKey" type="password" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
-          <div class="form-row"><label>Model (override — bỏ trống = mặc định provider)</label><input id="aiModel" value="${esc(ai.model || '')}" placeholder="vd: deepseek-chat, gpt-4o-mini…" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
+          <div class="form-row"><label>${t('set.key_blank')}</label><input id="aiKey" type="password" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
+          <div class="form-row"><label>${t('set.model_override')}</label><input id="aiModel" value="${esc(ai.model || '')}" placeholder="${esc(t('set.model_ph'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
           <button class="btn btn-primary" id="btnAiSave">${t('set.save_ai')}</button>
         </div>
       </div>
       <div class="card"><h2>${t('set.card_prompt')}</h2>
         <div class="form-2col">
-          <div class="form-row"><label>Giọng nói</label><input id="pGiongNoi" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="thân thiện, dùng 'dạ/ạ'"></div>
-          <div class="form-row"><label>Cách xưng hô</label><input id="pXungHo" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="em gọi khách là anh/chị"></div>
+          <div class="form-row"><label>${t('set.p_voice')}</label><input id="pGiongNoi" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_voice'))}"></div>
+          <div class="form-row"><label>${t('set.p_addressing')}</label><input id="pXungHo" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_addressing'))}"></div>
         </div>
         <div class="form-2col">
-          <div class="form-row"><label>Ưu tiên bán</label><input id="pUuTien" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="combo quà tặng, nến M"></div>
-          <div class="form-row"><label>Ngôn ngữ</label><input id="pNgonNgu" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="tiếng Việt có dấu"></div>
+          <div class="form-row"><label>${t('set.p_priority')}</label><input id="pUuTien" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_priority'))}"></div>
+          <div class="form-row"><label>${t('set.p_lang')}</label><input id="pNgonNgu" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_lang'))}"></div>
         </div>
-        <div class="form-row"><label>Chính sách đổi trả</label><input id="pDoiTra" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="đổi trả trong 7 ngày"></div>
+        <div class="form-row"><label>${t('set.p_return')}</label><input id="pDoiTra" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_return'))}"></div>
         <div class="form-2col">
-          <div class="form-row"><label>Giờ làm việc</label><input id="pGioLam" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="8h-21h mỗi ngày"></div>
-          <div class="form-row"><label>Quy tắc chốt đơn</label><input id="pChotDon" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="hỏi đủ tên/SĐT/địa chỉ rồi xác nhận"></div>
+          <div class="form-row"><label>${t('set.p_hours')}</label><input id="pGioLam" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_hours'))}"></div>
+          <div class="form-row"><label>${t('set.p_close')}</label><input id="pChotDon" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_close'))}"></div>
         </div>
-        <div class="form-row"><label>Không được nói (mỗi mục một dòng)</label><textarea id="pKhongNoi" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="không cam kết giá sai DB&#10;không hứa giờ giao cụ thể"></textarea></div>
+        <div class="form-row"><label>${t('set.p_forbid')}</label><textarea id="pKhongNoi" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_forbid'))}"></textarea></div>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-primary" id="btnPromptSave">${t('set.save_prompt')}</button>
           <button class="btn" id="btnPromptView">${t('set.view_prompt')}</button>
@@ -1165,30 +1191,30 @@ async function renderSettings() {
         </div>
       </div>
       <div class="card"><h2>${t('set.card_profile')}</h2>
-        <small style="display:block;color:var(--text-faint);margin-bottom:8px">Độ ưu tiên CAO HƠN cấu hình prompt cũ — field điền ở đây sẽ đè khi build system prompt. Cấm pattern secret (sk-/token/api-key…).</small>
+        <small style="display:block;color:var(--text-faint);margin-bottom:8px">${t('set.prof_note')}</small>
         <div class="form-2col">
-          <div class="form-row"><label>Tên shop</label><input id="spTen" value="${esc(prof.ten || '')}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
-          <div class="form-row"><label>Lĩnh vực</label><input id="spLinhVuc" value="${esc(prof.linhVuc || '')}" placeholder="nến thơm handmade, trà hoa sấy" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.prof_name')}</label><input id="spTen" value="${esc(prof.ten || '')}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.prof_field')}</label><input id="spLinhVuc" value="${esc(prof.linhVuc || '')}" placeholder="${esc(t('set.ph_field'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
         </div>
         <div class="form-2col">
-          <div class="form-row"><label>Hotline</label><input id="spHotline" value="${esc(prof.hotline || '')}" placeholder="0900123456" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
-          <div class="form-row"><label>Logo (URL)</label><input id="spLogo" value="${esc(prof.logo || '')}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.prof_hotline')}</label><input id="spHotline" value="${esc(prof.hotline || '')}" placeholder="${esc(t('set.ph_hotline'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.prof_logo')}</label><input id="spLogo" value="${esc(prof.logo || '')}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
         </div>
-        <div class="form-row"><label>Địa chỉ</label><input id="spDiaChi" value="${esc(prof.diaChi || '')}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+        <div class="form-row"><label>${t('set.prof_address')}</label><input id="spDiaChi" value="${esc(prof.diaChi || '')}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
         <div class="form-2col">
-          <div class="form-row"><label>Giờ làm việc</label><input id="spGioLamViec" value="${esc(prof.gioLamViec || '')}" placeholder="8h-21h mỗi ngày" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
-          <div class="form-row"><label>Giọng nói</label><input id="spGiongNoi" value="${esc(prof.giongNoi || '')}" placeholder="thân thiện, dùng 'dạ/ạ'" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.p_hours')}</label><input id="spGioLamViec" value="${esc(prof.gioLamViec || '')}" placeholder="${esc(t('set.ph_hours'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.p_voice')}</label><input id="spGiongNoi" value="${esc(prof.giongNoi || '')}" placeholder="${esc(t('set.ph_voice'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
         </div>
         <div class="form-2col">
-          <div class="form-row"><label>Cách xưng hô</label><input id="spCachXungHo" value="${esc(prof.cachXungHo || '')}" placeholder="em gọi khách là anh/chị" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
-          <div class="form-row"><label>CTA kết thúc</label><input id="spCta" value="${esc(prof.cta || '')}" placeholder="Anh/chị chốt đơn giúp em nha!" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.p_addressing')}</label><input id="spCachXungHo" value="${esc(prof.cachXungHo || '')}" placeholder="${esc(t('set.ph_addressing'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+          <div class="form-row"><label>${t('set.prof_cta')}</label><input id="spCta" value="${esc(prof.cta || '')}" placeholder="${esc(t('set.ph_cta'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
         </div>
-        <div class="form-row"><label>Chính sách đổi trả</label><input id="spChinhSachDoiTra" value="${esc(prof.chinhSachDoiTra || '')}" placeholder="đổi trả trong 7 ngày" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
-        <div class="form-row"><label>Chính sách giao hàng</label><input id="spChinhSachGiaoHang" value="${esc(prof.chinhSachGiaoHang || '')}" placeholder="2-4 ngày toàn quốc, freeship từ 500k" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
-        <div class="form-row"><label>Quy tắc tư vấn</label><textarea id="spQuyTuVan" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="hỏi nhu cầu trước, chỉ tư vấn SP còn hàng">${esc(prof.quyTacTuVan || '')}</textarea></div>
-        <div class="form-row"><label>Quy tắc chốt đơn</label><textarea id="spQuyChotDon" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="hỏi đủ tên/SĐT/địa chỉ rồi gửi bill xác nhận">${esc(prof.quyTacChotDon || '')}</textarea></div>
-        <div class="form-row"><label>FAQ (mỗi dòng: câu hỏi | trả lời)</label><textarea id="spFaq" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="ship bao lâu? | 2-4 ngày&#10;đổi trả được không? | 7 ngày">${esc((prof.faq || []).map(f => `${f.q || ''} | ${f.a || ''}`).join('\n'))}</textarea></div>
-        <div class="form-row"><label>Thông tin cầm nói (mỗi dòng 1 mục)</label><textarea id="spCamNoi" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="nến đốt được 30 tiếng&#10;trà hoa sấy 100% tự nhiên">${esc((prof.thongTinCamNoi || []).join('\n'))}</textarea></div>
+        <div class="form-row"><label>${t('set.p_return')}</label><input id="spChinhSachDoiTra" value="${esc(prof.chinhSachDoiTra || '')}" placeholder="${esc(t('set.ph_return'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+        <div class="form-row"><label>${t('set.prof_ship')}</label><input id="spChinhSachGiaoHang" value="${esc(prof.chinhSachGiaoHang || '')}" placeholder="${esc(t('set.ph_ship'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
+        <div class="form-row"><label>${t('set.prof_adv')}</label><textarea id="spQuyTuVan" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_adv'))}">${esc(prof.quyTacTuVan || '')}</textarea></div>
+        <div class="form-row"><label>${t('set.p_close')}</label><textarea id="spQuyChotDon" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_close_bill'))}">${esc(prof.quyTacChotDon || '')}</textarea></div>
+        <div class="form-row"><label>${t('set.prof_faq')}</label><textarea id="spFaq" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_faq'))}">${esc((prof.faq || []).map(f => `${f.q || ''} | ${f.a || ''}`).join('\n'))}</textarea></div>
+        <div class="form-row"><label>${t('set.prof_tell')}</label><textarea id="spCamNoi" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px" placeholder="${esc(t('set.ph_tell'))}">${esc((prof.thongTinCamNoi || []).join('\n'))}</textarea></div>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-primary" id="btnShopProfileSave">${t('set.save_profile')}</button>
           <span id="spOut" style="font-size:12.5px"></span>
@@ -1196,36 +1222,36 @@ async function renderSettings() {
       </div>
       <div class="card"><h2>${t('set.card_bot')}</h2>
         <div class="set-row">
-          <span class="label"><strong>${t('set.auto_reply')}</strong><small>Tắt = mọi auto-send bị gate chặn (bot_off)</small></span>
+          <span class="label"><strong>${t('set.auto_reply')}</strong><small>${t('set.bot_off_desc')}</small></span>
           <button class="switch ${d.bot.on ? 'on' : ''}" id="setBotSwitch"></button>
         </div>
-        <div class="set-row"><span class="label"><strong>Auto reply</strong><small>Chung công tắc bot trong prototype</small></span><span class="pill ${d.bot.autoReply ? 'pill-green' : 'pill-gray'}"><span class="dot"></span>${d.bot.autoReply ? 'Bật' : 'Tắt'}</span></div>
-        <div class="set-row"><span class="label"><strong>Auto-order (cần GHN khi go-live)</strong><small>checklist: bước 5 bắt buộc xanh khi bật</small></span>
+        <div class="set-row"><span class="label"><strong>${t('set.autoreply')}</strong><small>${t('set.autoreply_desc')}</small></span><span class="pill ${d.bot.autoReply ? 'pill-green' : 'pill-gray'}"><span class="dot"></span>${d.bot.autoReply ? t('ov.on_short') : t('ov.off_short')}</span></div>
+        <div class="set-row"><span class="label"><strong>${t('set.auto_order')}</strong><small>${t('set.auto_order_desc')}</small></span>
           <button class="switch ${shopCfg.auto_order ? 'on' : ''}" id="setAutoOrder"></button></div>
-        <div class="set-row"><span class="label"><strong>Human takeover</strong><small>Hội thoại đang do nhân viên giữ (INV-5: AI cấm gửi)</small></span><span class="v"><strong>${d.takeoverCount}</strong> hội thoại</span></div>
-        <div class="set-row"><span class="label"><strong>${t('set.needs_staff')}</strong><small>flag needs_human hoặc mode HUMAN</small></span><span class="v"><strong>${d.canNhanVien}</strong> hội thoại</span></div>
+        <div class="set-row"><span class="label"><strong>${t('ov.takeover')}</strong><small>${t('set.takeover_desc')}</small></span><span class="v">${t('ov.conv_unit', { n: `<strong>${d.takeoverCount}</strong>` })}</span></div>
+        <div class="set-row"><span class="label"><strong>${t('set.needs_staff')}</strong><small>${t('set.needs_staff_desc')}</small></span><span class="v">${t('ov.conv_unit', { n: `<strong>${d.canNhanVien}</strong>` })}</span></div>
       </div>
       <div class="card"><h2>${t('set.card_comment')}</h2>
-        <small style="display:block;color:var(--text-faint);margin-bottom:8px">3 công tắc lưu trong settings shop (POST /api/settings) — pipeline đọc FRESH mỗi bình luận, đổi là hiệu lực ngay, không cần restart.</small>
-        <div class="set-row"><span class="label"><strong>${t('set.cmt_auto')}</strong><small>auto_reply_comment — câu hỏi / ý định mua được bot trả công khai</small></span>
+        <small style="display:block;color:var(--text-faint);margin-bottom:8px">${t('set.cmt_note')}</small>
+        <div class="set-row"><span class="label"><strong>${t('set.cmt_auto')}</strong><small>${t('set.cmt_auto_desc')}</small></span>
           <button class="switch ${cmt.auto_reply_comment ? 'on' : ''}" id="swAutoReplyComment"></button></div>
-        <div class="set-row"><span class="label"><strong>${t('set.cmt_hide')}</strong><small>hide_negative_comment — comment lừa đảo/chê bị ẩn + vào việc cho nhân viên (mock — Phase-2 gọi Graph API)</small></span>
+        <div class="set-row"><span class="label"><strong>${t('set.cmt_hide')}</strong><small>${t('set.cmt_hide_desc')}</small></span>
           <button class="switch ${cmt.hide_negative_comment ? 'on' : ''}" id="swHideNegativeComment"></button></div>
-        <div class="set-row"><span class="label"><strong>${t('set.cmt_inbox')}</strong><small>auto_inbox_from_comment — khách có ý định mua từ comment được đẩy vào inbox bán</small></span>
+        <div class="set-row"><span class="label"><strong>${t('set.cmt_inbox')}</strong><small>${t('set.cmt_inbox_desc')}</small></span>
           <button class="switch ${cmt.auto_inbox_from_comment ? 'on' : ''}" id="swAutoInboxComment"></button></div>
       </div>
       <div class="card"><h2>${t('set.card_team')}</h2>
         <div id="teamBox"><div style="color:var(--text-faint);font-size:14px;padding:4px 0">${t('set.loading_members')}</div></div>
         <div id="teamFormWrap" style="display:none;margin-top:10px;border-top:1px solid var(--bg-soft);padding-top:10px">
           <div class="form-2col">
-            <div class="form-row"><label>Email thành viên mới</label><input id="tmEmail" type="email" placeholder="ban@shop.vn" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
-            <div class="form-row"><label>Mật khẩu (≥8 ký tự)</label><input id="tmPass" type="password" placeholder="tối thiểu 8 ký tự" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
+            <div class="form-row"><label>${t('set.tm_email')}</label><input id="tmEmail" type="email" placeholder="ban@shop.vn" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
+            <div class="form-row"><label>${t('set.tm_pass')}</label><input id="tmPass" type="password" placeholder="${esc(t('set.ph_pass'))}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px"></div>
           </div>
-          <div class="form-row"><label>Vai trò</label>
+          <div class="form-row"><label>${t('set.tm_role')}</label>
             <select id="tmRole" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px;font-size:14px">
-              <option value="AGENT">AGENT — nhân viên bán (hội thoại + đơn)</option>
-              <option value="ADMIN">ADMIN — quản trị shop</option>
-              <option value="OWNER">OWNER — chủ shop (toàn quyền)</option>
+              <option value="AGENT">${t('set.role_agent_full')}</option>
+              <option value="ADMIN">${t('set.role_admin_full')}</option>
+              <option value="OWNER">${t('set.role_owner_full')}</option>
             </select></div>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-primary" id="btnTeamAdd">${t('set.add_member')}</button>
@@ -1234,9 +1260,9 @@ async function renderSettings() {
         </div>
       </div>
       <div class="card"><h2>${t('set.card_auto')}</h2>
-        <div class="set-row"><span class="label"><strong>Follow-up (care / marketing)</strong><small>${fuStatus}</small></span><span class="v"><strong>${fu.follow_ups_total}</strong> lịch</span></div>
-        <div class="set-row"><span class="label"><strong>Khách đã opt-out quảng cáo</strong><small>Automation marketing dừng theo chính sách</small></span><span class="v"><strong>${fu.opt_out_customers}</strong> khách</span></div>
-        <div class="set-row"><span class="label"><strong>Loại follow-up</strong><small>${Object.entries(fu.follow_ups_by_kind || {}).map(([k, v]) => `${esc(k)}: ${v}`).join(' · ') || '—'}</small></span><span></span></div>
+        <div class="set-row"><span class="label"><strong>${t('set.fu_follow')}</strong><small>${fuStatus}</small></span><span class="v">${t('misc.schedules', { n: `<strong>${fu.follow_ups_total}</strong>` })}</span></div>
+        <div class="set-row"><span class="label"><strong>${t('set.fu_optout')}</strong><small>${t('set.fu_optout_desc')}</small></span><span class="v">${t('misc.customers', { n: `<strong>${fu.opt_out_customers}</strong>` })}</span></div>
+        <div class="set-row"><span class="label"><strong>${t('set.fu_kinds')}</strong><small>${Object.entries(fu.follow_ups_by_kind || {}).map(([k, v]) => `${esc(k)}: ${v}`).join(' · ') || '—'}</small></span><span></span></div>
         <div class="auto-form" style="margin-top:10px;border-top:1px solid var(--bg-soft);padding-top:10px">
           <div class="form-2col">
             <div class="form-row"><label>${t('set.auto_hours')}</label>
@@ -1244,14 +1270,14 @@ async function renderSettings() {
             <div class="form-row"><label>${t('set.auto_days')}</label>
               <input id="autoReminderDays" type="number" min="1" max="365" value="${esc(fu.config.purchase_reminder_days)}" style="width:100%;padding:8px;border:1.5px solid var(--border-gray);border-radius:8px"></div>
           </div>
-          <div class="set-row"><span class="label"><strong>${t('set.auto_care')}</strong><small>tin hỏi thăm sau khi đơn DELIVERED (core tạo — cấu hình giờ + bật/tắt)</small></span>
+          <div class="set-row"><span class="label"><strong>${t('set.auto_care')}</strong><small>${t('set.auto_care_desc')}</small></span>
             <button class="switch ${fu.config.care_enabled ? 'on' : ''}" id="autoCare"></button></div>
-          <div class="set-row"><span class="label"><strong>Review request</strong><small>xin đánh giá sau giao (vẫn đi qua Window/Quota/Opt-out của core)</small></span>
+          <div class="set-row"><span class="label"><strong>${t('set.auto_review')}</strong><small>${t('set.auto_review_desc')}</small></span>
             <button class="switch ${fu.config.review_enabled ? 'on' : ''}" id="autoReview"></button></div>
-          <div class="set-row"><span class="label"><strong>Purchase reminder</strong><small>nhắc mua lại — tin MARKETING, chịu opt-out + cửa sổ 24h</small></span>
+          <div class="set-row"><span class="label"><strong>${t('set.auto_reminder')}</strong><small>${t('set.auto_reminder_desc')}</small></span>
             <button class="switch ${fu.config.purchase_reminder_enabled ? 'on' : ''}" id="autoReminder"></button></div>
           <button class="btn btn-primary" id="btnAutoSave" style="margin-top:8px">${t('set.save_auto')}</button>
-          <small style="display:block;color:var(--text-faint);margin-top:6px">Gate Window/Quota/Opt-out/Receipt luôn là quyết định của core — cấu hình này chỉ đặt LỊCH.</small>
+          <small style="display:block;color:var(--text-faint);margin-top:6px">${t('set.auto_note')}</small>
         </div>
       </div>
       <div class="card"><h2>${t('set.card_account')}</h2>
@@ -1261,28 +1287,48 @@ async function renderSettings() {
         </div>
         <button class="btn" id="btnChangePass">${t('set.change_pass')}</button>
         <div class="kv-grid" style="grid-template-columns:160px 1fr;margin-top:12px">
-          <span class="k">Phiên bản</span><span class="v">${esc(h.version)} · Node ${esc(h.node)} · APP_DATA=${esc(h.modes.data)}</span>
-          <span class="k">Uptime</span><span class="v">${Math.floor(h.uptime_s / 60)} phút ${h.uptime_s % 60}s</span>
-          <span class="k">Đồng hồ hệ thống</span><span class="v">${fmtTime(h.clock_now)}</span>
-          <span class="k">Lỗi gần đây</span><span class="v">send_failed: <strong>${h.errors.send_failed}</strong> · DLQ: <strong>${h.errors.dlq_count}</strong> · event_failed: <strong>${h.errors.event_failed}</strong> · order timeout: <strong>${h.errors.order_create_timeout}</strong> · follow-up fail: <strong>${h.errors.follow_up_failed}</strong></span>
-          <span class="k">Jobs DEAD</span><span class="v">${h.jobs_dead}</span>
+          <span class="k">${t('set.k_version')}</span><span class="v">${esc(h.version)} · Node ${esc(h.node)} · APP_DATA=${esc(h.modes.data)}</span>
+          <span class="k">${t('set.k_uptime')}</span><span class="v">${t('set.uptime_val', { m: Math.floor(h.uptime_s / 60), s: h.uptime_s % 60 })}</span>
+          <span class="k">${t('set.k_clock')}</span><span class="v">${fmtTime(h.clock_now)}</span>
+          <span class="k">${t('set.k_recent_err')}</span><span class="v">send_failed: <strong>${h.errors.send_failed}</strong> · DLQ: <strong>${h.errors.dlq_count}</strong> · event_failed: <strong>${h.errors.event_failed}</strong> · order timeout: <strong>${h.errors.order_create_timeout}</strong> · follow-up fail: <strong>${h.errors.follow_up_failed}</strong></span>
+          <span class="k">${t('set.k_jobs_dead')}</span><span class="v">${h.jobs_dead}</span>
         </div>
       </div>
     </div>`;
   const gw = $('#goWizard');
   if (gw) gw.addEventListener('click', () => { state.view = 'wizard'; renderCurrent(); });
   $('#btnAiTest').addEventListener('click', async () => {
-    toast('Đang test AI provider…');
+    toast(t('set.toast_test_running'));
     try {
       const r = await api('/api/ai/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      toast(`AI test PASS (${r.ai.provider})`);
-    } catch (e) { toast('AI test ERROR: ' + e.message, true); }
+      toast(t('set.toast_test_pass', { p: r.ai.provider }));
+    } catch (e) { toast(t('set.toast_test_err') + e.message, true); }
     renderSettings();
   });
   $('#btnAiConfig').addEventListener('click', () => {
     const box = $('#aiCfgBox');
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
   });
+  // ---- Công tắc ngôn ngữ BOT trả lời khách (persona_lang) — POST /api/settings ----
+  const personaSel = $('#personaLang');
+  if (personaSel) {
+    personaSel.dataset.prev = personaLangCur;
+    personaSel.addEventListener('change', async () => {
+      const v = personaSel.value;
+      try {
+        await api('/api/settings', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ persona_lang: v }),
+        });
+        personaSel.dataset.prev = v;
+        ck.persona_lang = v;
+        toast(t('set.persona_saved'));
+      } catch (e) {
+        personaSel.value = personaSel.dataset.prev || 'vi'; // rollback UI nếu backend chưa whitelist
+        toast(t('set.persona_fail') + e.message, true);
+      }
+    });
+  }
   // SURI P2 (hạng mục 2/5a): công tắc BẬT/TẮT AI cho lời tư vấn (không đụng provider/key —
   // tắt => engine fallback template FAQ stub như cũ).
   $('#setAiUseReplies').addEventListener('click', async () => {
@@ -1292,8 +1338,8 @@ async function renderSettings() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ use_for_replies: next }),
       });
-      toast(next ? 'AI SẼ VIẾT lời tư vấn (giá/tồn vẫn lấy từ DB, Gate vẫn chặn số sai)' : 'ĐÃ TẮT AI tư vấn — trả lời bằng template FAQ stub');
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+      toast(next ? t('set.toast_ai_on') : t('set.toast_ai_off'));
+    } catch (e) { toast(t('misc.err') + e.message, true); }
     renderSettings();
   });
   $('#btnAiSave').addEventListener('click', async () => {
@@ -1302,9 +1348,9 @@ async function renderSettings() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: $('#aiProvider').value, api_key: $('#aiKey').value, model: $('#aiModel').value }),
       });
-      toast('Đã lưu cấu hình AI (key không bao giờ hiển thị lại)');
+      toast(t('set.toast_ai_saved'));
       renderSettings();
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   });
   $('#btnPromptSave').addEventListener('click', async () => {
     const cfg = {
@@ -1317,16 +1363,16 @@ async function renderSettings() {
     };
     try {
       await api('/api/prompt/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) });
-      toast('Đã lưu prompt config');
+      toast(t('set.toast_prompt_saved'));
     } catch (e) {
-      toast(e.body && e.body.error === 'SECRET_IN_PROMPT' ? 'CHẶN: prompt chứa pattern secret (sk-/token…)' : 'Lỗi: ' + e.message, true);
+      toast(e.body && e.body.error === 'SECRET_IN_PROMPT' ? t('set.err_secret') : t('misc.err') + e.message, true);
     }
   });
   $('#btnPromptView').addEventListener('click', async () => {
     try {
       const r = await api('/api/prompt');
-      $('#promptOut').textContent = `${r.prompt.length} ký tự prompt`;
-    } catch (e) { $('#promptOut').textContent = 'lỗi'; }
+      $('#promptOut').textContent = t('set.prompt_chars', { n: r.prompt.length });
+    } catch (e) { $('#promptOut').textContent = t('misc.err_short'); }
   });
   // SURI P1: lưu hồ sơ shop cho AI (field rỗng = xoá field — form là full-state)
   $('#btnShopProfileSave').addEventListener('click', async () => {
@@ -1347,24 +1393,24 @@ async function renderSettings() {
           faq, thongTinCamNoi: $('#spCamNoi').value.split('\n').map(s => s.trim()).filter(Boolean),
         }),
       });
-      $('#spOut').textContent = 'đã lưu';
-      toast('Đã lưu hồ sơ shop cho AI (đè config prompt cũ khi build prompt)');
+      $('#spOut').textContent = t('set.saved_short');
+      toast(t('set.toast_prof_saved'));
     } catch (e) {
-      $('#spOut').textContent = 'lỗi';
-      toast(e.body && e.body.error === 'INVALID_PROFILE' ? 'CHẶN: hồ sơ chứa pattern secret/dữ liệu lạ' : 'Lỗi: ' + e.message, true);
+      $('#spOut').textContent = t('misc.err_short');
+      toast(e.body && e.body.error === 'INVALID_PROFILE' ? t('set.err_prof_secret') : t('misc.err') + e.message, true);
     }
   });
   // SURI P1: nối key DeepSeek live từ provider config ngoài (key không bao giờ về browser)
   $('#btnWireDeepseek').addEventListener('click', async () => {
-    $('#wireOut').textContent = 'đang đọc provider config + gọi thử DeepSeek…';
+    $('#wireOut').textContent = t('set.wire_testing');
     try {
       const r = await api('/api/ai/wire-deepseek', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       $('#wireOut').textContent = `${r.status} · ${r.model} · key ${r.maskedKey}`;
-      toast(`DeepSeek wire: ${r.status}`);
+      toast(t('set.wire_done', { status: r.status }));
     } catch (e) {
       const b = (e && e.body) || {};
       $('#wireOut').textContent = `ERROR · ${b.error || e.message}`;
-      toast('Wire DeepSeek ERROR: ' + (b.error || e.message), true);
+      toast(t('set.wire_err') + (b.error || e.message), true);
     }
   });
   $('#setAutoOrder').addEventListener('click', async () => {
@@ -1373,8 +1419,8 @@ async function renderSettings() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stepId: 'settings', data: { auto_order: !shopCfg.auto_order } }),
       });
-      toast(`Auto-order ${!shopCfg.auto_order ? 'BẬT' : 'TẮT'}`);
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+      toast(!shopCfg.auto_order ? t('set.toast_auto_order_on') : t('set.toast_auto_order_off'));
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   });
   $('#btnAutoSave').addEventListener('click', async () => {
     try {
@@ -1388,9 +1434,9 @@ async function renderSettings() {
           purchase_reminder_enabled: $('#autoReminder').classList.contains('on'),
         }),
       });
-      toast('Đã lưu cấu hình Automation (áp cho các follow-up đến hạn sau)');
+      toast(t('set.toast_auto_saved'));
       renderSettings();
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   });
   $('#btnChangePass').addEventListener('click', async () => {
     try {
@@ -1398,8 +1444,8 @@ async function renderSettings() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ old_password: $('#accOld').value, new_password: $('#accNew').value }),
       });
-      toast('Đã đổi mật khẩu');
-    } catch (e) { toast(e.message === 'WEAK_PASSWORD' ? 'Mật khẩu tối thiểu 8 ký tự' : 'Lỗi: ' + e.message, true); }
+      toast(t('set.toast_pass_changed'));
+    } catch (e) { toast(e.message === 'WEAK_PASSWORD' ? t('set.err_weak') : t('misc.err') + e.message, true); }
   });
   const sw = $('#setBotSwitch');
   sw.addEventListener('click', async () => {
@@ -1408,9 +1454,9 @@ async function renderSettings() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ on: !d.bot.on }),
       });
-      toast(r.on ? 'Bot ĐÃ BẬT — tiếp tục tự trả lời' : 'Bot ĐÃ TẮT — gate chặn mọi auto-send (bot_off)');
+      toast(r.on ? t('set.toast_bot_on') : t('set.toast_bot_off'));
       renderSettings();
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   });
   // ---- AICAKE (G5): 3 công tắc comment — bật/tắt rồi lưu CẢ OBJECT settings 1 lần ----
   for (const id of ['swAutoReplyComment', 'swHideNegativeComment', 'swAutoInboxComment']) {
@@ -1423,15 +1469,15 @@ async function renderSettings() {
   loadTeamBox();
   $('#btnTeamAdd').addEventListener('click', async () => {
     const errMap = {
-      BAD_EMAIL: 'Email không hợp lệ',
-      WEAK_PASSWORD: 'Mật khẩu tối thiểu 8 ký tự',
-      EMAIL_EXISTS: 'Email đã tồn tại trong hệ thống',
-      BAD_ROLE: 'Vai trò không hợp lệ',
-      ONLY_OWNER_CREATES_OWNER: 'Chỉ OWNER mới được tạo tài khoản OWNER',
-      FORBIDDEN: 'Bạn không đủ quyền tạo thành viên (cần OWNER/ADMIN)',
-      SHOP_NOT_FOUND: 'Shop không tồn tại',
+      BAD_EMAIL: 'set.err_email',
+      WEAK_PASSWORD: 'set.err_weak',
+      EMAIL_EXISTS: 'set.err_exists',
+      BAD_ROLE: 'set.err_role',
+      ONLY_OWNER_CREATES_OWNER: 'set.err_owner_only',
+      FORBIDDEN: 'set.err_perm',
+      SHOP_NOT_FOUND: 'set.err_shop',
     };
-    $('#teamOut').textContent = 'đang lưu…';
+    $('#teamOut').textContent = t('set.saving');
     try {
       await api('/api/auth/users', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1444,10 +1490,10 @@ async function renderSettings() {
       $('#teamOut').textContent = '';
       $('#tmEmail').value = '';
       $('#tmPass').value = '';
-      toast(`Đã thêm thành viên (${($('#tmRole') || {}).value || ''}) — gửi mật khẩu qua kênh riêng`);
+      toast(t('set.toast_member', { role: ($('#tmRole') || {}).value || '' }));
       loadTeamBox();
     } catch (e) {
-      const msg = errMap[e.message] || e.message;
+      const msg = errMap[e.message] ? t(errMap[e.message]) : e.message;
       $('#teamOut').textContent = '';
       toast(msg, true);
     }
@@ -1460,16 +1506,16 @@ async function renderWizard() {
   const ob = await api('/api/onboarding');
   state.onboarding = ob;
   const stIcon = s => s === 'CONNECTED'
-    ? '<span class="pill pill-green"><span class="dot"></span>XONG</span>'
-    : s === 'ERROR' ? '<span class="pill pill-red"><span class="dot"></span>LỖI</span>'
-      : '<span class="pill pill-gray"><span class="dot"></span>CHƯA XONG</span>';
+    ? `<span class="pill pill-green"><span class="dot"></span>${t('wiz.pill_done')}</span>`
+    : s === 'ERROR' ? `<span class="pill pill-red"><span class="dot"></span>${t('wiz.pill_err')}</span>`
+      : `<span class="pill pill-gray"><span class="dot"></span>${t('wiz.pill_not_done')}</span>`;
   const done = ob.steps.filter(s => s.status === 'CONNECTED').length;
 
   const stepCard = (n, step, bodyHtml) => `
     <div class="card" style="margin-bottom:14px">
       <h2 style="display:flex;align-items:center;gap:10px">
         <span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:${step.status === 'CONNECTED' ? 'var(--green-soft)' : 'var(--primary-soft)'};color:${step.status === 'CONNECTED' ? 'var(--green)' : 'var(--primary-dark)'};align-items:center;justify-content:center;font-size:13px;font-weight:700">${n}</span>
-        ${esc(step.ten)} <span style="margin-left:auto">${stIcon(step.status)}</span>
+        ${esc(WIZ_STEP_KEY[step.id] ? t(WIZ_STEP_KEY[step.id]) : (step.ten || step.id))} <span style="margin-left:auto">${stIcon(step.status)}</span>
       </h2>
       <div style="font-size:12.5px;color:var(--text-light);margin-bottom:10px">${esc(step.id)}</div>
       ${bodyHtml}
@@ -1489,78 +1535,78 @@ async function renderWizard() {
   main.innerHTML = `
     <div class="page-head">
       <div>
-        <h1>Thiết lập shop — wizard ${esc(ob.progress)}</h1>
-        <div class="sub">Hoàn thiện 7 bước để BẬT bot tự động (go-live checklist)</div>
+        <h1>${t('wiz.title', { p: esc(ob.progress) })}</h1>
+        <div class="sub">${t('wiz.sub')}</div>
       </div>
-      <button class="btn" id="wizSkip">Xem dashboard trước</button>
+      <button class="btn" id="wizSkip">${t('wiz.skip')}</button>
     </div>
 
     ${stepCard(1, s1, `
       <div class="form-2col">
-        ${inp('wShopName', 'Tên shop', (s1.chiTiet || {}).shop_name, 'Shop Nến Scent')}
-        ${inp('wHotline', 'Hotline', (s1.chiTiet || {}).hotline, '090xxxxxxx')}
+        ${inp('wShopName', t('wiz.f_shop_name'), (s1.chiTiet || {}).shop_name, t('wiz.ph_shop'))}
+        ${inp('wHotline', t('wiz.f_hotline'), (s1.chiTiet || {}).hotline, t('wiz.ph_hotline'))}
       </div>
-      ${inp('wAddress', 'Địa chỉ', (s1.chiTiet || {}).address, '123 ABC, Q1, TP.HCM')}
-      <button class="btn btn-primary" data-step="shop-info">Lưu bước 1</button>`)}
+      ${inp('wAddress', t('wiz.f_address'), (s1.chiTiet || {}).address, t('wiz.ph_address'))}
+      <button class="btn btn-primary" data-step="shop-info">${t('wiz.save_step', { n: 1 })}</button>`)}
 
     ${stepCard(2, s2, `
       <div class="form-2col">
-        ${inp('wFbPage', 'Page ID', (s2.chiTiet || {}).page_id, '1234567890')}
-        ${inp('wFbToken', 'Page Access Token', '', 'EAA… (chỉ ghi, không hiển thị lại)', 'password')}
+        ${inp('wFbPage', t('wiz.f_page_id'), (s2.chiTiet || {}).page_id, t('wiz.ph_page_id'))}
+        ${inp('wFbToken', t('wiz.f_page_token'), '', t('wiz.ph_fb_token'), 'password')}
       </div>
-      <button class="btn btn-primary" data-step="facebook">Lưu bước 2</button>`)}
+      <button class="btn btn-primary" data-step="facebook">${t('wiz.save_step', { n: 2 })}</button>`)}
 
     ${stepCard(3, s3, `
       <div class="form-2col">
-        ${inp('wZaloOa', 'OA ID', (s3.chiTiet || {}).oa_id, '123456789')}
-        ${inp('wZaloToken', 'Access Token', '', 'token OA (chỉ ghi, không hiển thị lại)', 'password')}
+        ${inp('wZaloOa', t('wiz.f_oa_id'), (s3.chiTiet || {}).oa_id, t('wiz.ph_oa_id'))}
+        ${inp('wZaloToken', t('wiz.f_token'), '', t('wiz.ph_zalo_token'), 'password')}
       </div>
-      <button class="btn btn-primary" data-step="zalo">Lưu bước 3</button>`)}
+      <button class="btn btn-primary" data-step="zalo">${t('wiz.save_step', { n: 3 })}</button>`)}
 
     ${stepCard(4, s4, `
-      <div class="kv"><span class="k">Sản phẩm đang bật bán</span>
-        <span class="v"><strong>${(s4.chiTiet || {}).enabled_count || 0}</strong> sản phẩm
-        <button class="btn" style="margin-left:10px" onclick="switchView('products')">Quản lý sản phẩm →</button></span></div>`)}
+      <div class="kv"><span class="k">${t('wiz.enabled_products')}</span>
+        <span class="v"><strong>${(s4.chiTiet || {}).enabled_count || 0}</strong> ${t('wiz.enabled_unit')}
+        <button class="btn" style="margin-left:10px" onclick="switchView('products')">${t('wiz.manage_products')}</button></span></div>`)}
 
     ${stepCard(5, s5, `
       <div class="form-2col">
-        ${inp('wGhnShop', 'GHN Shop ID', (s5.chiTiet || {}).shop_id, '1234567')}
-        ${inp('wGhnToken', 'GHN Token', '', 'token GHN (chỉ ghi, không hiển thị lại)', 'password')}
+        ${inp('wGhnShop', t('wiz.f_ghn_shop'), (s5.chiTiet || {}).shop_id, t('wiz.ph_ghn_shop'))}
+        ${inp('wGhnToken', t('wiz.f_ghn_token'), '', t('wiz.ph_ghn_token'), 'password')}
       </div>
-      <button class="btn btn-primary" data-step="shipping">Lưu bước 5</button>`)}
+      <button class="btn btn-primary" data-step="shipping">${t('wiz.save_step', { n: 5 })}</button>`)}
 
     ${stepCard(6, s6, `
       <div class="form-2col">
-        <div class="form-row"><label>Provider</label>
+        <div class="form-row"><label>${t('set.provider')}</label>
           <select id="wAiProvider">
             <option value="deepseek"${s6.chiTiet && s6.chiTiet.provider === 'deepseek' ? ' selected' : ''}>DeepSeek</option>
             <option value="openai"${s6.chiTiet && s6.chiTiet.provider === 'openai' ? ' selected' : ''}>OpenAI</option>
-            <option value="local"${s6.chiTiet && s6.chiTiet.provider === 'local' ? ' selected' : ''}>Local (stub — không gọi mạng)</option>
+            <option value="local"${s6.chiTiet && s6.chiTiet.provider === 'local' ? ' selected' : ''}>${t('ai.local_stub')}</option>
           </select></div>
-        ${inp('wAiKey', 'API Key', '', 'sk-… (chỉ ghi, không hiển thị lại)', 'password')}
-        ${inp('wAiModel', 'Model (bỏ trống = mặc định)', (s6.chiTiet || {}).model, 'deepseek-chat')}
+        ${inp('wAiKey', t('wiz.f_api_key'), '', t('wiz.ph_ai_key'), 'password')}
+        ${inp('wAiModel', t('wiz.f_model'), (s6.chiTiet || {}).model, t('wiz.ph_model'))}
       </div>
       <div style="display:flex;gap:10px">
-        <button class="btn btn-primary" data-step="ai">Lưu cấu hình AI</button>
-        <button class="btn" id="wAiTest">Test gọi AI</button>
-        <span id="wAiTestOut" style="align-self:center;font-size:13px">${s6.chiTiet && s6.chiTiet.last_error ? `<span style="color:var(--red)">lỗi: ${esc(s6.chiTiet.last_error)}</span>` : ''}</span>
+        <button class="btn btn-primary" data-step="ai">${t('wiz.save_ai')}</button>
+        <button class="btn" id="wAiTest">${t('set.test_ai')}</button>
+        <span id="wAiTestOut" style="align-self:center;font-size:13px">${s6.chiTiet && s6.chiTiet.last_error ? `<span style="color:var(--red)">${t('wiz.err_prefix')}${esc(s6.chiTiet.last_error)}</span>` : ''}</span>
       </div>`)}
 
     ${stepCard(7, s7, `
-      <div class="kv"><span class="k">Test hội thoại (bot trả lời được)</span>
-        <span class="v">${(s7.chiTiet || {}).test_conversation ? '<span class="pill pill-green"><span class="dot"></span>PASS</span>' : '<span class="pill pill-gray"><span class="dot"></span>Chưa test</span>'}
-        <button class="btn" style="margin-left:10px" id="wTestConv">Chạy test hội thoại</button></span></div>
-      <div class="kv"><span class="k">Test đơn hàng (chốt được đơn CONFIRMED)</span>
-        <span class="v">${(s7.chiTiet || {}).test_order ? '<span class="pill pill-green"><span class="dot"></span>PASS</span>' : '<span class="pill pill-gray"><span class="dot"></span>Chưa test</span>'}
-        <button class="btn" style="margin-left:10px" id="wTestOrder">Chạy test đơn</button></span></div>`)}
+      <div class="kv"><span class="k">${t('wiz.test_conv')}</span>
+        <span class="v">${(s7.chiTiet || {}).test_conversation ? `<span class="pill pill-green"><span class="dot"></span>PASS</span>` : `<span class="pill pill-gray"><span class="dot"></span>${t('wiz.not_tested')}</span>`}
+        <button class="btn" style="margin-left:10px" id="wTestConv">${t('wiz.run_conv')}</button></span></div>
+      <div class="kv"><span class="k">${t('wiz.test_order')}</span>
+        <span class="v">${(s7.chiTiet || {}).test_order ? `<span class="pill pill-green"><span class="dot"></span>PASS</span>` : `<span class="pill pill-gray"><span class="dot"></span>${t('wiz.not_tested')}</span>`}
+        <button class="btn" style="margin-left:10px" id="wTestOrder">${t('wiz.run_order')}</button></span></div>`)}
 
     <div class="card" style="border:1.5px solid ${ob.canGoLive ? 'var(--green)' : '#fecaca'}">
-      <h2>Go-live</h2>
+      <h2>${t('wiz.golive')}</h2>
       ${ob.canGoLive
-        ? '<p style="color:var(--green);font-weight:600;margin-bottom:10px">Checklist ĐỦ — có thể bật bot tự động.</p>'
-        : `<p style="color:var(--red);font-weight:600;margin-bottom:8px">Chưa đủ điều kiện bật bot. Lý do:</p>
+        ? `<p style="color:var(--green);font-weight:600;margin-bottom:10px">${t('wiz.ok_full')}</p>`
+        : `<p style="color:var(--red);font-weight:600;margin-bottom:8px">${t('wiz.fail_intro')}</p>
            <ul style="color:var(--red);margin:0 0 10px 18px;line-height:1.7">${ob.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`}
-      <button class="btn btn-primary btn-big" id="wBotOn" ${(!ob.canGoLive || state.dashboard && state.dashboard.bot.on) ? 'disabled' : ''}>BẬT BOT TỰ ĐỘNG</button>
+      <button class="btn btn-primary btn-big" id="wBotOn" ${(!ob.canGoLive || state.dashboard && state.dashboard.bot.on) ? 'disabled' : ''}>${t('wiz.btn_on')}</button>
     </div>`;
 
   const saveStep = async (stepId, data) => {
@@ -1569,10 +1615,10 @@ async function renderWizard() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stepId, data }),
       });
-      toast('Đã lưu');
+      toast(t('wiz.toast_saved'));
       state.onboarding = r;
       renderWizard();
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+    } catch (e) { toast(t('misc.err') + e.message, true); }
   };
   document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
     const step = b.dataset.step;
@@ -1584,7 +1630,7 @@ async function renderWizard() {
   }));
   const aiTest = $('#wAiTest');
   if (aiTest) aiTest.addEventListener('click', async () => {
-    $('#wAiTestOut').textContent = 'đang test…';
+    $('#wAiTestOut').textContent = t('wiz.testing');
     try {
       const r = await api('/api/ai/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       $('#wAiTestOut').innerHTML = `<span style="color:var(--green)">PASS (${esc(r.ai.provider)})</span>`;
@@ -1598,8 +1644,8 @@ async function renderWizard() {
     tc.disabled = true;
     try {
       const r = await api('/api/onboarding/test-conversation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      toast(r.ok ? 'Test hội thoại PASS — bot trả lời được' : 'Test hội thoại chưa pass', !r.ok);
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+      toast(r.ok ? t('wiz.toast_conv_pass') : t('wiz.toast_conv_fail'), !r.ok);
+    } catch (e) { toast(t('misc.err') + e.message, true); }
     renderWizard();
   });
   const to = $('#wTestOrder');
@@ -1607,18 +1653,18 @@ async function renderWizard() {
     to.disabled = true;
     try {
       const r = await api('/api/onboarding/test-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      toast(r.ok ? 'Test đơn PASS — tạo được đơn CONFIRMED' : 'Test đơn chưa pass', !r.ok);
-    } catch (e) { toast('Lỗi: ' + e.message, true); }
+      toast(r.ok ? t('wiz.toast_order_pass') : t('wiz.toast_order_fail'), !r.ok);
+    } catch (e) { toast(t('misc.err') + e.message, true); }
     renderWizard();
   });
   const bon = $('#wBotOn');
   if (bon) bon.addEventListener('click', async () => {
     try {
       await api('/api/settings/bot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: true }) });
-      toast('BOT ĐÃ BẬT — shop đã go-live!');
+      toast(t('wiz.toast_golive'));
       state.view = 'overview';
       renderCurrent();
-    } catch (e) { toast('Chưa bật được: ' + e.message, true); renderWizard(); }
+    } catch (e) { toast(t('wiz.toast_on_fail') + e.message, true); renderWizard(); }
   });
   $('#wizSkip').addEventListener('click', () => { state.view = 'overview'; renderCurrent(); });
 }
@@ -1688,7 +1734,7 @@ async function renderReports() {
       <div class="table-wrap">
         <table class="tbl">
           <thead><tr><th>${t('rep.th_status')}</th><th style="text-align:right">${t('rep.th_count')}</th></tr></thead>
-          <tbody>${statusRows || '<tr><td colspan="2" class="tbl-empty">Chưa có đơn nào trong khoảng</td></tr>'}</tbody>
+          <tbody>${statusRows || `<tr><td colspan="2" class="tbl-empty">${t('rep.empty_range')}</td></tr>`}</tbody>
         </table>
       </div>
     </div>`;
@@ -1728,7 +1774,7 @@ async function renderReports() {
         <div class="table-wrap">
           <table class="tbl">
             <thead><tr><th>#</th><th>${t('rep.th_customer')}</th><th style="text-align:right">${t('rep.th_orders')}</th><th style="text-align:right">${t('rep.th_spent')}</th></tr></thead>
-            <tbody>${custRows || '<tr><td colspan="4" class="tbl-empty">Chưa có đơn đã chốt trong khoảng</td></tr>'}</tbody>
+            <tbody>${custRows || `<tr><td colspan="4" class="tbl-empty">${t('rep.empty_confirmed')}</td></tr>`}</tbody>
           </table>
         </div>
       </div>
@@ -1737,7 +1783,7 @@ async function renderReports() {
         <div class="table-wrap">
           <table class="tbl">
             <thead><tr><th>#</th><th>${t('rep.th_product')}</th><th>SKU</th><th style="text-align:right">${t('rep.th_qty')}</th><th style="text-align:right">${t('rep.th_orders')}</th></tr></thead>
-            <tbody>${prodRows || '<tr><td colspan="5" class="tbl-empty">Chưa có đơn đã chốt trong khoảng</td></tr>'}</tbody>
+            <tbody>${prodRows || `<tr><td colspan="5" class="tbl-empty">${t('rep.empty_confirmed')}</td></tr>`}</tbody>
           </table>
         </div>
       </div>
@@ -1798,18 +1844,21 @@ function gdClearHash() {
 }
 
 async function renderGuide() {
-  // đã có layout + dữ liệu -> không vẽ lại (tránh mất focus ô tìm kiếm khi SSE tick refetch)
-  if ($('#gdLayout') && state.guide.data && state.guide.i18nV === (window.__i18nV || 0)) return;
-  if (!state.guide.data) {
+  // i18n: guide fetch theo ngôn ngữ UI hiện tại (?lang= — backend hỗ trợ, thiếu bản dịch trả VI, không lỗi).
+  const lang = uiLang();
+  // đã có layout + dữ liệu ĐÚNG ngôn ngữ -> không vẽ lại (tránh mất focus ô tìm kiếm khi SSE tick refetch)
+  if ($('#gdLayout') && state.guide.data && state.guide.i18nV === (window.__i18nV || 0) && state.guide.lang === lang) return;
+  if (!state.guide.data || state.guide.lang !== lang) {
     try {
-      const body = await api('/api/guide');
+      const body = await api('/api/guide?lang=' + encodeURIComponent(lang));
       // nhận cả 2 shape: contract gọn {version, product, categories} hoặc bọc {ok, guide:{…}}
       state.guide.data = (body && body.guide && Array.isArray(body.guide.categories)) ? body.guide : body;
+      state.guide.lang = lang; // cache đổi key 'data_'+lang — setLang -> uiLang() khác -> refetch
     } catch (e) {
       main.innerHTML = `
         <div class="card" style="margin-top:20px;max-width:520px">
           <h2>${t('gd.load_fail')}</h2>
-          <p style="color:var(--text-light);margin:8px 0 14px">Lỗi: ${esc(e.message)}. Có thể máy chủ chưa sẵn sàng — hãy thử lại.</p>
+          <p style="color:var(--text-light);margin:8px 0 14px">${t('gd.load_err', { msg: esc(e.message) })}</p>
           <button class="btn btn-primary" onclick="renderGuide()">${t('gd.retry')}</button>
         </div>`;
       return;
@@ -1948,7 +1997,7 @@ function gdHomeHtml() {
                 <span class="gd-hit-title">${esc(x.a.title)}</span>
                 ${x.a.summary ? `<span class="gd-hit-sum">${esc(x.a.summary)}</span>` : ''}
               </span>
-              <span class="gd-hit-meta">${esc(x.c.title)} · ~${Number(x.a.minutes) || 1} phút</span>
+              <span class="gd-hit-meta">${esc(x.c.title)} · ~${Number(x.a.minutes) || 1} ${t('gd.min_short')}</span>
             </button>`).join('')
           : `<div class="gd-empty">${t('gd.no_match')}</div>`}
       </div>`;
@@ -2060,7 +2109,7 @@ async function gdAskSend() {
     const arts = Array.isArray(r && r.articles) ? r.articles : [];
     $('#gdChatMsgs').insertAdjacentHTML('beforeend', `
       <div class="gd-msg-row bot"><div class="gd-bubble">
-        <div class="gd-ans">${esc((r && r.answer) || 'Mình chưa tìm thấy câu trả lời phù hợp — bạn thử hỏi cụ thể hơn nhé (VD: "Cách tạo đơn hàng cho khách?").')}</div>
+        <div class="gd-ans">${esc((r && r.answer) || t('gd.ai_no_answer'))}</div>
         ${steps.length ? `<div class="gd-ans-steps">${steps.map((s, i) => `
           <div class="gd-ans-step"><b>${i + 1}. ${esc(s.title || '')}</b><div>${esc(s.body || '')}</div></div>`).join('')}</div>` : ''}
         ${arts.length ? `<div class="gd-ans-arts">${arts.map(a => `
@@ -2070,7 +2119,7 @@ async function gdAskSend() {
     rmTyping();
     // lỗi mạng/API -> "toast" ngay trong khung chat (không crash, không dùng toast nền toàn màn)
     $('#gdChatMsgs').insertAdjacentHTML('beforeend',
-      `<div class="gd-chat-toast">⚠ Không gửi được câu hỏi (${esc(e.message)}). Kiểm tra kết nối rồi thử lại giúp mình nhé.</div>`);
+      `<div class="gd-chat-toast">⚠ ${t('gd.chat_fail', { msg: esc(e.message) })}</div>`);
   } finally {
     state.guide.asking = false;
     if (btn) btn.disabled = false;
@@ -2116,17 +2165,17 @@ $('#botToggle').addEventListener('click', async () => {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ on: !d.bot.on }),
     });
-    toast(r.on ? 'Bot ĐÃ BẬT' : 'Bot ĐÃ TẮT — mọi auto-send bị chặn');
+    toast(r.on ? t('top.toast_on') : t('top.toast_off'));
     renderCurrent();
   } catch (e) {
     // Go-live checklist chưa đủ -> 403 GO_LIVE_CHECKLIST + reasons (đỏ)
     if (e.body && e.body.error === 'GO_LIVE_CHECKLIST' && Array.isArray(e.body.reasons)) {
-      toast('CHƯA ĐỦ GO-LIVE: ' + e.body.reasons.join(' · '), true);
+      toast(t('top.toast_not_golive') + e.body.reasons.join(' · '), true);
       state.view = 'wizard';
       renderCurrent();
       return;
     }
-    toast('Lỗi: ' + e.message, true);
+    toast(t('misc.err') + e.message, true);
   }
 });
 
@@ -2140,7 +2189,7 @@ $('#notifReadAll').addEventListener('click', async () => {
   try {
     await api('/api/notifications/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) });
     await loadNotifications();
-    toast('Đã đọc tất cả thông báo');
+    toast(t('misc.read_all_done'));
   } catch (e) { toast('Lỗi: ' + e.message, true); }
 });
 document.addEventListener('click', e => {

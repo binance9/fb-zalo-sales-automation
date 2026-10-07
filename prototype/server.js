@@ -1855,11 +1855,18 @@ function createServer(opts = {}) {
         if (p === '/api/settings' && req.method === 'POST') {
           const body = await readJsonBody(req);
           const ALLOWED = ['auto_reply_comment', 'hide_negative_comment', 'auto_inbox_from_comment',
+            'persona_lang', // AICAKE i18n: ngôn ngữ bot Suri trả lời khách (vi/en/zh/ko/hi/ja)
             'shop_name', 'shop_hotline', 'shop_address', 'auto_order', 'timezone'];
           const boolKeys = new Set(['auto_reply_comment', 'hide_negative_comment', 'auto_inbox_from_comment', 'auto_order']);
+          const LANG_OK = new Set(['vi', 'en', 'zh', 'ko', 'hi', 'ja']);
           const patch = {};
           for (const k of ALLOWED) {
             if (body[k] === undefined) continue;
+            if (k === 'persona_lang') { // chỉ nhận 6 ngôn ngữ hợp lệ, khác -> bỏ qua
+              const lang = String(body[k]).toLowerCase().trim();
+              if (LANG_OK.has(lang)) patch[k] = lang;
+              continue;
+            }
             patch[k] = boolKeys.has(k) ? (body[k] === true || body[k] === 'true' || body[k] === 1 || body[k] === '1') : String(body[k]).slice(0, 300);
           }
           if (!Object.keys(patch).length) return sendJson(res, 400, { ok: false, error: 'NO_VALID_KEY' });

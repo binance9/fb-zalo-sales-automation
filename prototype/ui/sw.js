@@ -9,7 +9,7 @@
    - Bump CACHE const khi đổi app shell; activate dọn cache cũ.
    ============================================================ */
 
-const CACHE = 'sai-static-v3';
+const CACHE = 'sai-static-v4';
 const PRECACHE = [
   '/style.css',
   '/manifest.webmanifest',

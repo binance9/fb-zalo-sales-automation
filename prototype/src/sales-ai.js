@@ -91,6 +91,83 @@ function sanitizeLLMText(t) {
   return s;
 }
 
+// ---------------------------------------------------------- SURI MULTILANG: STUB template
+// Bản dịch THẬT của template cốt lõi (PRICE list / VARIANT / STOCK còn-hết / BUY_ASK hỏi
+// trường thiếu). lang='vi' KHÔNG đi qua bảng này — giữ NGUYÊN chữ cũ (matrix 245 không vỡ);
+// lang lạ/thiếu bảng => fallback vi. Số tiền/tồn vẫn render từ DB (fmtVND + effective).
+const STUB_T = {
+  en: {
+    noName: 'this product',
+    price: (name, vs) => `Here are the prices for ${name}:\n` +
+      vs.map(v => `- size ${v.size}${v.color ? ' color ' + v.color : ''}: ${fmtVND(v.price)}đ`).join('\n'),
+    variant: (name, vs) => `Current availability for ${name}:\n` +
+      vs.map(v => `- size ${v.size}${v.color ? ' color ' + v.color : ''}: ${v.effective > 0 ? v.effective + ' in stock' : 'out of stock'} (${fmtVND(v.price)}đ)`).join('\n'),
+    stockOk: (name, v) => `Yes! ${name} (${v.size}${v.color ? ' color ' + v.color : ''}) is still in stock — ${v.effective} left. Want me to set one aside for you?`,
+    stockOut: (name, v) => `Sorry, ${name} (${v.size}${v.color ? ' color ' + v.color : ''}) has just sold out.`,
+    buy: (cart, ask) => `Got it — ${cart}! ${ask}.`,
+    askPhone: 'may I have your phone number to confirm the order',
+    askAddress: 'could you share your delivery address',
+    askName: 'may I have your name for the order',
+    askConfirm: 'could you confirm this order for me',
+  },
+  zh: {
+    noName: '这款商品',
+    price: (name, vs) => `您好，${name} 的价格如下哦：\n` +
+      vs.map(v => `- 尺码 ${v.size}${v.color ? ' ' + v.color : ''}：${fmtVND(v.price)}đ`).join('\n'),
+    variant: (name, vs) => `您好，${name} 目前的库存情况哦：\n` +
+      vs.map(v => `- 尺码 ${v.size}${v.color ? ' ' + v.color : ''}：${v.effective > 0 ? '还剩 ' + v.effective + ' 件' : '缺货'}（${fmtVND(v.price)}đ）`).join('\n'),
+    stockOk: (name, v) => `您好，${name}（${v.size}${v.color ? ' ' + v.color : ''}）还有 ${v.effective} 件现货哦，需要我帮您留一件吗？`,
+    stockOut: (name, v) => `不好意思，${name}（${v.size}${v.color ? ' ' + v.color : ''}）刚刚卖完了哦。`,
+    buy: (cart, ask) => `好的，${cart} 已记录哦！${ask}。`,
+    askPhone: '方便留个电话让我确认订单吗',
+    askAddress: '请告诉我收货地址哦',
+    askName: '请告诉我您的姓名方便下单哦',
+    askConfirm: '请您帮我确认一下这个订单哦',
+  },
+  ko: {
+    noName: '이 상품',
+    price: (name, vs) => `네, ${name} 가격 안내드릴게요:\n` +
+      vs.map(v => `- 사이즈 ${v.size}${v.color ? ' ' + v.color : ''}: ${fmtVND(v.price)}đ`).join('\n'),
+    variant: (name, vs) => `네, ${name} 재고 현황이에요:\n` +
+      vs.map(v => `- 사이즈 ${v.size}${v.color ? ' ' + v.color : ''}: ${v.effective > 0 ? v.effective + '개 남음' : '품절'} (${fmtVND(v.price)}đ)`).join('\n'),
+    stockOk: (name, v) => `네, ${name} (${v.size}${v.color ? ' ' + v.color : ''}) 아직 ${v.effective}개 남아 있어요! 하나 가져가시겠어요?`,
+    stockOut: (name, v) => `죄송해요, ${name} (${v.size}${v.color ? ' ' + v.color : ''}) 방금 품절되었어요.`,
+    buy: (cart, ask) => `네, ${cart} 주문 접수했어요! ${ask}.`,
+    askPhone: '주문 확인용으로 연락처 좀 알려주시겠어요',
+    askAddress: '배송지 주소 알려주시겠어요',
+    askName: '주문서에 들어갈 성함 알려주시겠어요',
+    askConfirm: '이 주문 확정 부탁드려요',
+  },
+  hi: {
+    noName: 'यह प्रोडक्ट',
+    price: (name, vs) => `जी, ${name} की कीमत इस प्रकार है:\n` +
+      vs.map(v => `- साइज़ ${v.size}${v.color ? ' ' + v.color : ''}: ${fmtVND(v.price)}đ`).join('\n'),
+    variant: (name, vs) => `जी, ${name} की अभी की स्टॉक स्थिति:\n` +
+      vs.map(v => `- साइज़ ${v.size}${v.color ? ' ' + v.color : ''}: ${v.effective > 0 ? v.effective + ' पीस उपलब्ध' : 'स्टॉक खत्म'} (${fmtVND(v.price)}đ)`).join('\n'),
+    stockOk: (name, v) => `जी हाँ, ${name} (${v.size}${v.color ? ' ' + v.color : ''}) अभी ${v.effective} पीस उपलब्ध है! एक लेना चाहेंगे?`,
+    stockOut: (name, v) => `माफ़ कीजिए, ${name} (${v.size}${v.color ? ' ' + v.color : ''}) अभी-अभी स्टॉक खत्म हो गया।`,
+    buy: (cart, ask) => `जी, ${cart} नोट कर लिया! ${ask}.`,
+    askPhone: 'ऑर्डर कन्फर्म करने के लिए आपका फ़ोन नंबर दे दीजिए',
+    askAddress: 'डिलीवरी का पता बता दीजिए',
+    askName: 'ऑर्डर के लिए अपना नाम बता दीजिए',
+    askConfirm: 'कृपया यह ऑर्डर कन्फर्म कर दीजिए',
+  },
+  ja: {
+    noName: 'この商品',
+    price: (name, vs) => `${name} の価格はこちらです：\n` +
+      vs.map(v => `- サイズ ${v.size}${v.color ? ' ' + v.color : ''}：${fmtVND(v.price)}đ`).join('\n'),
+    variant: (name, vs) => `${name} の在庫状況です：\n` +
+      vs.map(v => `- サイズ ${v.size}${v.color ? ' ' + v.color : ''}: ${v.effective > 0 ? '残り' + v.effective + '点' : '在庫切れ'}（${fmtVND(v.price)}đ）`).join('\n'),
+    stockOk: (name, v) => `${name}（${v.size}${v.color ? ' ' + v.color : ''}）はあと${v.effective}点ございます。ご希望でしたらお取り置きしますね！`,
+    stockOut: (name, v) => `申し訳ありません、${name}（${v.size}${v.color ? ' ' + v.color : ''}）はたった今売り切れてしまいました。`,
+    buy: (cart, ask) => `かしこまりました、${cart} を承りました！${ask}。`,
+    askPhone: 'ご注文確認のためお電話番号を教えていただけますか',
+    askAddress: 'お届け先のご住所をお願いします',
+    askName: 'ご注文のお名前をお願いします',
+    askConfirm: 'このご注文の確認をお願いいたします',
+  },
+};
+
 class SalesAI {
   // opts.getConfig : () => runtime AI | null. Runtime: { provider, api_key, model, timeout,
   //                  base_url, useForReplies, systemPrompt }. App wiring đọc từ ShopSettings
@@ -107,8 +184,19 @@ class SalesAI {
     this.getConfig = typeof opts.getConfig === 'function' ? opts.getConfig : null;
     this.httpFn = opts.httpFn || null; // null => đường production: LLM đi async (httpOnceAsync)
     this.asyncHttpFn = opts.asyncHttpFn !== undefined ? opts.asyncHttpFn : null;
+    // SURI MULTILANG: hook đọc ngôn ngữ trả lời (settings shop 'persona_lang') — app tiêm vào;
+    // null/hook lỗi => 'vi' (hành vi cũ nguyên trạng, xem _replyLang).
+    this.getReplyLang = typeof opts.getReplyLang === 'function' ? opts.getReplyLang : null;
     this.lastEngine = 'stub';          // 'stub' | 'llm:<provider>' — engine của lần propose cuối
     this.stats = { llm_calls: 0, llm_ok: 0, llm_fallback: 0, last_fallback_reason: null };
+  }
+
+  // SURI MULTILANG: ngôn ngữ của lần propose này — đọc FRESH qua hook (app đọc settings shop
+  // mỗi tin, đổi ngôn ngữ không cần restart); sai/lỗi/thiếu => persona.getReplyLang về 'vi'.
+  _replyLang() {
+    let l = null;
+    try { l = this.getReplyLang ? this.getReplyLang() : null; } catch (e) { l = null; }
+    return persona.getReplyLang({ replyLang: l });
   }
 
   // Runtime AI hiện tại: có provider ngoài (deepseek/openai) + key + KHÔNG bị tắt useForReplies.
@@ -134,6 +222,10 @@ class SalesAI {
   // cả hai qua helper _then — tiếp diễn ĐÚNG code cũ trong cả hai trường hợp.
   propose(intent, ctx) {
     assertModelCtxSafe(intent, ctx);
+    // SURI MULTILANG: gắn ngôn ngữ trả lời vào ctx (bản sao nông — không đụng ctx của caller);
+    // stub lẫn LLM đều đọc ctx.replyLang, thiếu/lỗi => 'vi'.
+    const lang = this._replyLang();
+    ctx = Object.assign({}, ctx, { replyLang: lang });
     const cfg = this._aiRuntime();
     if (cfg && LLM_INTENTS.has(intent)) {
       const llm = this._tryLLM(intent, ctx, cfg);
@@ -174,7 +266,9 @@ class SalesAI {
       }
       const url = (cfg.base_url && /^https?:\/\//i.test(String(cfg.base_url))) ? String(cfg.base_url) : spec.url;
       const system = [
-        persona.buildPersonaBlock(cfg), // AICAKE SOUL: hồn nhân vật trước systemPrompt shop
+        // AICAKE SOUL: hồn nhân vật trước systemPrompt shop. SURI MULTILANG: kèm ngôn ngữ trả
+        // lời (dòng NGÔN NGỮ TRẢ LỜI khi != vi) — FACTS bên dưới giữ nguyên số nguyên gốc.
+        persona.buildPersonaBlock(Object.assign({}, cfg, { replyLang: ctx.replyLang })),
         String(cfg.systemPrompt || 'Bạn là trợ lý bán hàng của shop.'),
         buildFactsBlock(ctx.facts, ctx),
         `NHIỆM VỤ HIỆN TẠI: ${INTENT_INSTRUCTION[intent] || 'Trả lời khách ngắn gọn, đúng FACTS.'}`,
@@ -253,6 +347,9 @@ class SalesAI {
     const facts = ctx.facts || {};
     const variants = facts.variants || [];
     const p = facts.subjectProduct;
+    // SURI MULTILANG: template theo lang shop chọn; vi hoặc lang không có bảng => null
+    // (=> nhánh chữ cũ NGUYÊN VẠN bên dưới, matrix 245 không vỡ).
+    const T = STUB_T[persona.getReplyLang(ctx)] || null;
 
     switch (intent) {
       case 'PRICE': {
@@ -270,41 +367,57 @@ class SalesAI {
         if (!variants.length) {
           return { intent, confidence: 0.1, evidence: null, text: null, needHuman: true };
         }
-        const lines = variants.map(v => `- size ${v.size}${v.color ? ' màu ' + v.color : ''}: ${fmtVND(v.price)}đ`);
-        return {
-          intent, confidence: 0.95,
-          evidence: { source: 'product_db', variants: variants.map(v => ({ sku: v.sku, price: v.price })) },
-          text: `Dạ ${p ? p.name : 'sản phẩm'} bên em có giá như sau nha anh/chị:\n${lines.join('\n')}`,
-        };
+        const evidence = { source: 'product_db', variants: variants.map(v => ({ sku: v.sku, price: v.price })) };
+        let text;
+        if (T) {
+          text = T.price(p ? p.name : T.noName, variants);
+        } else {
+          const lines = variants.map(v => `- size ${v.size}${v.color ? ' màu ' + v.color : ''}: ${fmtVND(v.price)}đ`);
+          text = `Dạ ${p ? p.name : 'sản phẩm'} bên em có giá như sau nha anh/chị:\n${lines.join('\n')}`;
+        }
+        return { intent, confidence: 0.95, evidence, text };
       }
 
       case 'VARIANT': {
         if (!variants.length) return { intent, confidence: 0.1, evidence: null, text: null, needHuman: true };
-        const lines = variants.map(v =>
-          `- size ${v.size}${v.color ? ' màu ' + v.color : ''}: ${v.effective > 0 ? `còn ${v.effective}` : 'hết hàng'} (${fmtVND(v.price)}đ)`);
-        return {
-          intent, confidence: 0.95,
-          evidence: { source: 'product_db', variants: variants.map(v => ({ sku: v.sku, effective: v.effective })) },
-          text: `Dạ tình trạng ${p ? p.name : 'sản phẩm'} hiện tại ạ:\n${lines.join('\n')}`,
-        };
+        const evidence = { source: 'product_db', variants: variants.map(v => ({ sku: v.sku, effective: v.effective })) };
+        let text;
+        if (T) {
+          text = T.variant(p ? p.name : T.noName, variants);
+        } else {
+          const lines = variants.map(v =>
+            `- size ${v.size}${v.color ? ' màu ' + v.color : ''}: ${v.effective > 0 ? `còn ${v.effective}` : 'hết hàng'} (${fmtVND(v.price)}đ)`);
+          text = `Dạ tình trạng ${p ? p.name : 'sản phẩm'} hiện tại ạ:\n${lines.join('\n')}`;
+        }
+        return { intent, confidence: 0.95, evidence, text };
       }
 
       case 'STOCK': {
         const v = variants[0];
         if (!v) return { intent, confidence: 0.1, evidence: null, text: null, needHuman: true };
         const ok = v.effective > 0;
+        const text = T
+          ? (ok ? T.stockOk(p.name, v) : T.stockOut(p.name, v))
+          : (ok
+            ? `Dạ ${p.name} (${v.size}${v.color ? ' màu ' + v.color : ''}) vẫn còn ${v.effective} cái, anh/chị muốn lấy nha ạ!`
+            : `Dạ anh/chị ơi, ${p.name} (${v.size}${v.color ? ' màu ' + v.color : ''}) mình vừa hết hàng rồi ạ.`);
         return {
           intent, confidence: 0.9,
           evidence: { source: 'product_db', sku: v.sku, effective: v.effective },
-          text: ok
-            ? `Dạ ${p.name} (${v.size}${v.color ? ' màu ' + v.color : ''}) vẫn còn ${v.effective} cái, anh/chị muốn lấy nha ạ!`
-            : `Dạ anh/chị ơi, ${p.name} (${v.size}${v.color ? ' màu ' + v.color : ''}) mình vừa hết hàng rồi ạ.`,
+          text,
         };
       }
 
       case 'BUY_ASK': {
         // Hỏi đúng trường còn thiếu (ưu tiên SĐT -> địa chỉ -> xác nhận, AI2 mục 1 state COLLECT_ORDER)
         const missing = ctx.draftMissing || [];
+        if (T) {
+          const ask = missing.includes('phone') ? T.askPhone
+            : missing.includes('address') ? T.askAddress
+            : missing.includes('name') ? T.askName
+            : T.askConfirm;
+          return { intent, confidence: 0.9, evidence: { missing }, text: T.buy(describeCart(variants), ask) };
+        }
         let ask;
         if (missing.includes('phone')) ask = 'anh/chị cho em xin SĐT để xác nhận đơn nha ạ';
         else if (missing.includes('address')) ask = 'anh/chị cho em xin địa chỉ giao hàng nha ạ';
