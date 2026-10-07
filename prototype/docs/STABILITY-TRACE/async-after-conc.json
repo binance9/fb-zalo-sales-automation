@@ -1,0 +1,131 @@
+{
+  "scenario": "conc",
+  "timestamps": {
+    "zero": {
+      "t": 37,
+      "iso": "2026-10-06T11:44:20.549Z"
+    },
+    "fired_conc-1": {
+      "t": 46,
+      "iso": "2026-10-06T11:44:20.558Z",
+      "latency_ms": 8,
+      "status": 200
+    },
+    "fired_conc-2": {
+      "t": 63,
+      "iso": "2026-10-06T11:44:20.575Z",
+      "latency_ms": 25,
+      "status": 200
+    },
+    "fired_conc-3": {
+      "t": 74,
+      "iso": "2026-10-06T11:44:20.586Z",
+      "latency_ms": 35,
+      "status": 200
+    },
+    "fired_conc-4": {
+      "t": 86,
+      "iso": "2026-10-06T11:44:20.598Z",
+      "latency_ms": 47,
+      "status": 200
+    },
+    "fired_conc-5": {
+      "t": 96,
+      "iso": "2026-10-06T11:44:20.608Z",
+      "latency_ms": 57,
+      "status": 200
+    },
+    "health_during_wait": {
+      "t": 100,
+      "iso": "2026-10-06T11:44:20.612Z",
+      "latency_ms": 4,
+      "status": 200
+    },
+    "settle": {
+      "t": 6251,
+      "iso": "2026-10-06T11:44:26.763Z",
+      "waited_ms": 6150
+    }
+  },
+  "result": {
+    "per_conv": [
+      {
+        "ref": "conc-1",
+        "in": 1,
+        "out": 1,
+        "out_texts": [
+          "Dạ nến thơm vanilla size M giá 185.000đ nha anh/chị ạ!"
+        ],
+        "runs": [
+          {
+            "status": "DONE",
+            "decision": "REPLY_VIA_GATE",
+            "replies": 1
+          }
+        ]
+      },
+      {
+        "ref": "conc-2",
+        "in": 1,
+        "out": 1,
+        "out_texts": [
+          "Dạ nến thơm vanilla size M giá 185.000đ nha anh/chị ạ!"
+        ],
+        "runs": [
+          {
+            "status": "DONE",
+            "decision": "REPLY_VIA_GATE",
+            "replies": 1
+          }
+        ]
+      },
+      {
+        "ref": "conc-3",
+        "in": 1,
+        "out": 1,
+        "out_texts": [
+          "Dạ nến thơm vanilla size M giá 185.000đ nha anh/chị ạ!"
+        ],
+        "runs": [
+          {
+            "status": "DONE",
+            "decision": "REPLY_VIA_GATE",
+            "replies": 1
+          }
+        ]
+      },
+      {
+        "ref": "conc-4",
+        "in": 1,
+        "out": 1,
+        "out_texts": [
+          "Dạ nến thơm vanilla size M giá 185.000đ nha anh/chị ạ!"
+        ],
+        "runs": [
+          {
+            "status": "DONE",
+            "decision": "REPLY_VIA_GATE",
+            "replies": 1
+          }
+        ]
+      },
+      {
+        "ref": "conc-5",
+        "in": 1,
+        "out": 1,
+        "out_texts": [
+          "Dạ nến thơm vanilla size M giá 185.000đ nha anh/chị ạ!"
+        ],
+        "runs": [
+          {
+            "status": "DONE",
+            "decision": "REPLY_VIA_GATE",
+            "replies": 1
+          }
+        ]
+      }
+    ],
+    "total_out": 5,
+    "total_in": 5
+  }
+}

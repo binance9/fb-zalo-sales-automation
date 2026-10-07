@@ -1,0 +1,64 @@
+{
+  "scenario": "repro",
+  "timestamps": {
+    "zero": {
+      "t": 175,
+      "iso": "2026-10-06T08:19:55.578Z"
+    },
+    "recv_price_post": {
+      "t": 6255,
+      "iso": "2026-10-06T08:20:01.658Z",
+      "latency_ms": 6079,
+      "status": 200
+    },
+    "health_during_wait": {
+      "t": 6264,
+      "iso": "2026-10-06T08:20:01.667Z",
+      "latency_ms": 6088,
+      "status": 200
+    },
+    "takeover_during_wait": {
+      "t": 6267,
+      "iso": "2026-10-06T08:20:01.670Z",
+      "latency_ms": 3,
+      "status": 200
+    },
+    "botoff_during_wait": {
+      "t": 6270,
+      "iso": "2026-10-06T08:20:01.673Z",
+      "latency_ms": 3,
+      "status": 200
+    },
+    "change_idea_post": {
+      "t": 6279,
+      "iso": "2026-10-06T08:20:01.682Z",
+      "latency_ms": 9,
+      "status": 200
+    },
+    "health_after": {
+      "t": 6281,
+      "iso": "2026-10-06T08:20:01.684Z",
+      "latency_ms": 1,
+      "status": 200
+    },
+    "settle": {
+      "t": 6283,
+      "iso": "2026-10-06T08:20:01.686Z",
+      "waited_ms": 2,
+      "out_msgs": 1
+    }
+  },
+  "result": {
+    "mode": "HUMAN",
+    "out_texts": [
+      "Dạ nến thơm vanilla size M giá 185.000đ nha anh/chị ạ!"
+    ],
+    "in_count": 2,
+    "out_count": 1,
+    "rejected": [],
+    "proposals_rejected": 0,
+    "metric_takeover_rej": 0,
+    "metric_botoff_rej": 1,
+    "metric_stale_rej": 0
+  }
+}

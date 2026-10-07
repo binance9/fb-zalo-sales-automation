@@ -1,0 +1,31 @@
+===== STAB-RUN-1 start 12:03:15 =====
+===== TEST MATRIX — 14 KHU VỰC (runtime thật qua API/App, offline) =====
+
+================ BẢNG KẾT QUẢ THEO KHU VỰC ================
+#         KHU VỰC         KẾT QUẢ     
+--------------------------------------
+1  Auth         16/16     PASS
+2  Onboarding   20/20     PASS
+3  Facebook     18/18     PASS
+4  Zalo         18/18     PASS
+5  Shipping     18/18     PASS
+6  Products     15/15     PASS
+7  Conversations18/18     PASS
+8  Orders       18/18     PASS
+9  Takeover     15/15     PASS
+10 Follow-up    15/15     PASS
+11 Persistence  14/15     FAIL
+12 Security     20/20     PASS
+13 PWA/UI       20/20     PASS
+14 E2E          19/19     PASS
+--------------------------------------
+
+TỔNG: 244/245 case PASS (16s) — tối thiểu đề bài: >=220 (14 khu vực)
+
+---- CASE FAIL ----
+  [Persistence] PS10: audit.jsonl append-only: mỗi dòng JSON hợp lệ + tăng monotonic
+        -> The expression evaluated to a falsy value: |  |   assert.ok(lines.length >= 10)
+
+==> CHƯA ĐẠT (cần >=220 PASS).
+EXIT_CODE=124 (124=timeout kill: runner khong tu exit)
+end 12:05:45

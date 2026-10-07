@@ -1,0 +1,43 @@
+  [PASS] case  1 — Khách hỏi giá — giá từ DB, không phải lời AI
+  [PASS] case  2 — Hỏi size/màu — liệt kê đúng biến thể + tồn hiệu dụng từ DB
+  [PASS] case  3 — Ảnh "còn cái này không?" — vision match + media local_path; match yếu -> NEEDS_HUMAN
+  [PASS] case  4 — Voice — ASR trước rồi vào pipeline text như thường; ASR fail -> NEEDS_HUMAN
+  [PASS] case  5 — Đổi sản phẩm giữa hội thoại — hủy DRAFT cũ, hoàn reserve, slot độc lập giữ nguyên
+  [PASS] case  6 — Mua nhiều SKU — order_items ≥2, trừ đúng stock; 1 variant hết -> rollback toàn bộ
+  [PASS] case  7 — Thiếu địa chỉ — không tạo đơn, hỏi đúng trường thiếu, state giữ COLLECT_ORDER
+  [PASS] case  8 — AI định báo sai giá ("giá sốc" -50%) — gate đè bằng giá DB 185000
+  [PASS] case  9 — Hết hàng giữa chat và chốt — pha B re-validate, không oversell
+  [PASS] case 10 — Webhook DUPLICATE — lần 2 bị bỏ, chỉ 1 reply, dedupe_hit=1
+  [PASS] case 11 — Gửi tin timeout — TIMEOUT_UNKNOWN -> check receipt -> DONE; không có tin thứ 2
+  [PASS] case 12 — Tạo vận đơn timeout — retry mù bị CHẶN -> DLQ; reconcile tra cứu mã -> không bao giờ 2 vận đơn
+  [PASS] case 13 — Khách khiếu nại — mode HUMAN (system), chỉ template an ủi, hủy follow-up marketing
+  [PASS] case 14 — Không đủ evidence — nhận không biết, câu an toàn + NEEDS_HUMAN, không đoán bừa
+  [PASS] case 15 — Human takeover — AI ngừng auto-send, nhân viên gửi được, job AI bị hủy sạch
+  [PASS] case 16 — Nhân viên trả quyền — AI propose lại, state giữ nguyên, không mâu thuẫn lời nhân viên
+  [PASS] case 17 — Follow-up sau giao hàng — DELIVERED -> hẹn +2 ngày -> gửi đúng 1 lần
+  [PASS] case 18 — Từ chối marketing — opt-out chặn marketing, tin transactional vẫn đi
+
+================= KẾT QUẢ 18 CASE =================
+#   KẾT QUẢ  MÔ TẢ                                                                       GHI CHÚ
+------------------------------------------------------------------------------------------------------------------------
+1   PASS     Khách hỏi giá — giá từ DB, không phải lời AI                                19ms
+2   PASS     Hỏi size/màu — liệt kê đúng biến thể + tồn hiệu dụng từ DB                  5ms
+3   PASS     Ảnh "còn cái này không?" — vision match + media local_path; match yếu -> N  9ms
+4   PASS     Voice — ASR trước rồi vào pipeline text như thường; ASR fail -> NEEDS_HUMA  8ms
+5   PASS     Đổi sản phẩm giữa hội thoại — hủy DRAFT cũ, hoàn reserve, slot độc lập giữ  11ms
+6   PASS     Mua nhiều SKU — order_items ≥2, trừ đúng stock; 1 variant hết -> rollback   17ms
+7   PASS     Thiếu địa chỉ — không tạo đơn, hỏi đúng trường thiếu, state giữ COLLECT_OR  10ms
+8   PASS     AI định báo sai giá ("giá sốc" -50%) — gate đè bằng giá DB 185000           4ms
+9   PASS     Hết hàng giữa chat và chốt — pha B re-validate, không oversell              10ms
+10  PASS     Webhook DUPLICATE — lần 2 bị bỏ, chỉ 1 reply, dedupe_hit=1                  3ms
+11  PASS     Gửi tin timeout — TIMEOUT_UNKNOWN -> check receipt -> DONE; không có tin t  8ms
+12  PASS     Tạo vận đơn timeout — retry mù bị CHẶN -> DLQ; reconcile tra cứu mã -> khô  22ms
+13  PASS     Khách khiếu nại — mode HUMAN (system), chỉ template an ủi, hủy follow-up m  14ms
+14  PASS     Không đủ evidence — nhận không biết, câu an toàn + NEEDS_HUMAN, không đoán  6ms
+15  PASS     Human takeover — AI ngừng auto-send, nhân viên gửi được, job AI bị hủy sạc  6ms
+16  PASS     Nhân viên trả quyền — AI propose lại, state giữ nguyên, không mâu thuẫn lờ  14ms
+17  PASS     Follow-up sau giao hàng — DELIVERED -> hẹn +2 ngày -> gửi đúng 1 lần        15ms
+18  PASS     Từ chối marketing — opt-out chặn marketing, tin transactional vẫn đi        17ms
+------------------------------------------------------------------------------------------------------------------------
+TỔNG: 18/18 PASS, 0 FAIL
+==> 18/18 — HỆ THỐNG ĐẠT.

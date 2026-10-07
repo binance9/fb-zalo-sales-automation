@@ -1,0 +1,25 @@
+================= LOI 2 — SYNC BLOCKING TRÊN ĐƯỜNG LLM =================
+wall-time của 1 tin khách (gồm propose LLM): 3011ms
+max gap giữa 2 tick setInterval(20ms): 3011ms
+kết luận: event loop bị block >= 3011ms (tick 20ms phải way hơn nhiều nếu không block)
+bot vẫn trả lời (engine=llm:deepseek): CÓ — "Dạ nến vanilla size M giá 185.000đ ạ."
+Chổ chặn (đã đọc code):
+  - src/live-http.js:39  spawnSync("curl", args, {timeout}) — GỌI ĐỒNG BỘ, chặn event loop suốt thời gian curl chạy
+  - src/sales-ai.js:160-167  http = this.httpFn || httpOnce; res = http({... timeoutMs: cfg.timeout || 20000}) — propose giữ SYNC
+  - src/sales-ai.js:124  propose(intent, ctx) — hợp đồng SYNC (pipeline gọi trực tiếp tại src/pipeline.js:413/433/477)
+Worst case hiện tại: timeout LLM mặc định 20000ms (src/ai-provider.js getAiConfig: ai_timeout || 20000;
+  src/sales-ai.js:167 timeoutMs: cfg.timeout || 20000) -> 1 tin khách có thể chặn event loop tới 20s;
+  saveAiConfig cho phép đặt tới 120000ms (ai-provider.js: BAD_TIMEOUT check 1000..120000).
+================= LOI 3 — GUARD TIỀN THIẾU SỐ KHÔNG ĐƠN VỊ =================
+subject: nến vanilla — variants DB: NT-VANILLA-S=165000, NT-VANILLA-M-DO=185000, NT-VANILLA-M-XANH=185000
+--- Đường PRICE (intent tiền — đã có bare-scan từ P3C?) ---
+A1 "giá 92500" (không đơn vị): decision=OVERRIDDEN sent=true bad_money=[92500] -> BỊ ĐÈ (guard ăn)
+A2 "92.5k":                  decision=OVERRIDDEN sent=true bad_money=[92500] -> BỊ ĐÈ (guard ăn)
+--- Đường bill/tổng tiền (intent khác PRICE: bare-scan hiện KHÔNG chạy?) ---
+B1 bill "tổng tiền 92500":  decision=OVERRIDDEN sent=true bad_money=[92500] -> BỊ ĐÈ (guard ăn)
+B2 bill "còn 92.5k":        decision=OVERRIDDEN sent=true bad_money=[92500] -> BỊ ĐÈ (guard ăn)
+B3 CHITCHAT "giá 92500":    decision=OVERRIDDEN sent=true bad_money=[92500] -> BỊ ĐÈ (guard ăn)
+--- Kiểm soát: số ĐÚNG có đơn vị trên bill (phải KHÔNG bị đè) ---
+C1 bill đúng 170.000đ:      decision=AUTO_EXECUTED sent=true -> ĐI BÌNH THƯỜNG (đúng)
+GHÍ CHÚ: raw text khớp những gì khách nhận được khi decision=AUTO_EXECUTED (text không đổi).
+================= PROBE DONE =================

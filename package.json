@@ -1,0 +1,14 @@
+{
+  "name": "fb-zalo-sales-automation",
+  "version": "1.0.0",
+  "description": "AI-powered sales automation console for Facebook & Zalo — auto-reply, order closing, GHN shipping, comment automation, follow-ups, reports. Pure Node.js, zero dependencies.",
+  "main": "prototype/server.js",
+  "scripts": {
+    "start": "node prototype/server.js",
+    "test": "node prototype/test/matrix/index.js"
+  },
+  "keywords": ["sales-automation", "facebook", "zalo", "ai", "chatbot", "orders", "ghn", "vietnam"],
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "private": false
+}

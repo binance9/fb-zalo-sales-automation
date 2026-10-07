@@ -1,0 +1,4 @@
+===== STAB-RUN-3 start 12:08:21 =====
+===== TEST MATRIX — 14 KHU VỰC (runtime thật qua API/App, offline) =====
+EXIT_CODE=124 (124=timeout kill: runner khong tu exit)
+end 12:10:51

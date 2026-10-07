@@ -1,0 +1,41 @@
+== SURI P2 — DeepSeek vào đường trả lời + repurchase history ==
+   1 PASS  [A] A1: provider cấu hình (httpFn tiêm) -> engine trả CÂU CHỮ LLM, không phải stub; key đi HEADER; FACTS nằm trong prompt  15ms
+   2 PASS  [A] A2: LLM BỊA giá 92500 (không có trong FACTS) -> P3C money guard ĐÈ bằng câu render từ DB, không gửi giá sai  9ms
+   3 PASS  [A] A3: BUY_ASK (luồng đơn) giữ deterministic — LLM KHÔNG được đụng order flow  19ms
+   4 PASS  [B] B1: chưa cấu hình provider -> stub FAQ như cũ (khớp CHÍNH XÁC text stub gốc)  6ms
+   5 PASS  [B] B2: use_for_replies=false (provider vẫn ONLINE) -> stub, KHÔNG gọi LLM  7ms
+   6 PASS  [C] C1: httpFn TIMEOUT -> fallback FAQ stub, không crash, khách vẫn nhận tin  7ms
+   7 PASS  [C] C2: LLM throw / HTTP 500 / JSON xấu / content rỗng -> đều fallback FAQ (4 biến thể)  27ms
+   8 PASS  [C] C3: getConfig ném lỗi giữa chừng (settings hỏng) -> stub, không crash pipeline  0ms
+   9 PASS  [D] D1: khách cũ "lấy thêm cái hôm trước" -> đề xuất lại ĐÚNG SP/SỐ LƯỢNG từ đơn cũ (DB) -> đơn mới  27ms
+  10 PASS  [D] D2: repurchase từ state ORDERED (sau khi giao xong) -> đơn #2 vẫn đúng items cũ  27ms
+  11 PASS  [D] D3: repurchase khi CHƯA có lịch sử đơn -> hỏi lại, KHÔNG đoán SKU  8ms
+  12 PASS  [D] D4: repurchase khi đơn cũ đã HUỶ -> không đề xuất lại đơn huỷ; hỏi lại  30ms
+  13 PASS  [D] D5: tin có nhắc SẢN PHẨM vẫn đi BUY (không bị repurchase nuốt) — regression P3B-1a  23ms
+  14 PASS  [E] E1: HTTP — /api/ai/config toggle độc lập use_for_replies + /api/ai/status trả view  77ms
+  15 PASS  [F] F1: node --check toàn bộ file .js (src + server + test)  3009ms
+      PASS 18-case lõi (test/18-cases.js) [0.4s]
+      PASS invariants (test/invariants-check.js) [0.4s]
+      PASS gate A (test/gate-a.js) [0.2s]
+      PASS P3B (test/p3b-cases.js) [0.4s]
+      PASS P3C (test/p3c-cases.js) [0.3s]
+      PASS live adapters (test/live-adapters.js) [0.3s]
+      PASS product-ready (test/product-ready.js) [2.5s]
+      PASS e2e flows (test/e2e-flows.js) [11s]
+      PASS suri agent (P1) (test/suri-agent.js) [0.5s]
+      PASS deepseek wire (LIVE) (test/deepseek-wire.js) [1.7s]
+  16 PASS  [F] F2: REGRESSION 7 suite + e2e-flows + suri-agent + deepseek-wire PASS nguyên trạng  17670ms
+
+TỔNG: 16/16 PASS (SURI P2)
+Regression:
+  PASS 18-case lõi (test/18-cases.js) [0.4s]
+  PASS invariants (test/invariants-check.js) [0.4s]
+  PASS gate A (test/gate-a.js) [0.2s]
+  PASS P3B (test/p3b-cases.js) [0.4s]
+  PASS P3C (test/p3c-cases.js) [0.3s]
+  PASS live adapters (test/live-adapters.js) [0.3s]
+  PASS product-ready (test/product-ready.js) [2.5s]
+  PASS e2e flows (test/e2e-flows.js) [11s]
+  PASS suri agent (P1) (test/suri-agent.js) [0.5s]
+  PASS deepseek wire (LIVE) (test/deepseek-wire.js) [1.7s]
+==> SURI P2: TOÀN BỘ PASS.

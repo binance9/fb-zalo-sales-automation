@@ -1,0 +1,165 @@
+[load] server REAL port = 57875
+[load] server :0 sẵn sàng — shop seeded, bot ON. Bắt đầu bắn 3 hội thoại x 1 tin/2s.
+[load] t+10s sent=15 rss=74MB
+[load] t+20s sent=30 rss=74MB
+[load] t+30s sent=45 rss=74MB
+[load] t+40s sent=60 rss=74MB
+[load] t+50s sent=75 rss=63MB
+[load] t+60s sent=90 rss=62MB
+[load] t+70s sent=105 rss=62MB
+[load] t+81s sent=120 rss=83MB
+[load] t+91s sent=135 rss=81MB
+[load] t+101s sent=150 rss=64MB
+[load] t+112s sent=165 rss=84MB
+t\sales-ai-lab\prototype\data\test-runs\load-server\shops\load-shop\db.json'
+    at Object.writeFileSync (node:fs:2422:20)
+    at Store.persist (C:\Users\BAOAN\.zcode\workspace\default\sales-ai-lab\prototype\src\store.js:192:8)
+    at App.runDueJobs (C:\Users\BAOAN\.zcode\workspace\default\sales-ai-lab\prototype\src\app.js:221:16)
+    at App.drain (C:\Users\BAOAN\.zcode\workspace\default\sales-ai-lab\prototype\src\app.js:248:16)
+    at Server.<anonymous> (C:\Users\BAOAN\.zcode\workspace\default\sales-ai-lab\prototype\server.js:2042:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\BAOAN\\.zcode\\workspace\\default\\sales-ai-lab\\prototype\\data\\test-runs\\load-server\\shops\\load-shop\\db.json'
+} | userMessage: Hệ thống đang bận chút, anh/chị thử lại giúp mình sau ít phút nha!
+[load] bắn tin fail (500): {"ok":false,"userMessage":"Hệ thống đang bận chút, anh/chị thử lại giúp mình sau ít phút nha!","error":"ENOENT"}
+[load] t+73s sent=107 rss=91MB
+[load] t+83s sent=122 rss=92MB
+[load] t+93s sent=137 rss=78MB
+[load] t+103s sent=152 rss=76MB
+[load] t+113s sent=167 rss=84MB
+[load] t+123s sent=182 rss=106MB
+[load] t+133s sent=197 rss=74MB
+[load] t+144s sent=212 rss=93MB
+[load] t+154s sent=227 rss=98MB
+[load] t+164s sent=242 rss=164MB
+[load] t+175s sent=257 rss=114MB
+[load] t+184s sent=272 rss=141MB
+[load] t+194s sent=287 rss=93MB
+[load] t+205s sent=302 rss=130MB
+[load] t+215s sent=317 rss=122MB
+[load] t+225s sent=332 rss=138MB
+[load] t+235s sent=347 rss=141MB
+[load] t+245s sent=362 rss=150MB
+[load] t+255s sent=377 rss=86MB
+[load] t+265s sent=392 rss=147MB
+[load] t+275s sent=407 rss=95MB
+[load] t+285s sent=422 rss=144MB
+[load] t+295s sent=437 rss=140MB
+[load] t+306s sent=452 rss=112MB
+[load] t+316s sent=467 rss=170MB
+[load] t+326s sent=482 rss=135MB
+[load] t+336s sent=497 rss=148MB
+[load] t+346s sent=512 rss=151MB
+[load] t+357s sent=527 rss=121MB
+[load] t+367s sent=542 rss=181MB
+[load] t+378s sent=557 rss=148MB
+[load] t+389s sent=572 rss=150MB
+[load] t+400s sent=587 rss=152MB
+[load] t+412s sent=602 rss=126MB
+[load] t+444s sent=631 rss=140MB
+[load] t+460s sent=645 rss=167MB
+[load] t+463s sent=647 rss=191MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+480s sent=662 rss=170MB
+[load] t+499s sent=677 rss=145MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+516s sent=690 rss=147MB
+[load] t+533s sent=705 rss=201MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+566s sent=736 rss=152MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+583s sent=750 rss=158MB
+[load] t+586s sent=751 rss=128MB
+[load] t+604s sent=765 rss=127MB
+[load] t+610s sent=766 rss=187MB
+[load] t+622s sent=780 rss=131MB
+[load] t+622s sent=781 rss=131MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+637s sent=795 rss=172MB
+[load] t+675s sent=827 rss=117MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+706s sent=855 rss=195MB
+[load] t+722s sent=870 rss=197MB
+[load] t+725s sent=872 rss=166MB
+[load] t+743s sent=887 rss=168MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+775s sent=915 rss=157MB
+[load] t+778s sent=916 rss=141MB
+[load] t+794s sent=930 rss=142MB
+[load] t+799s sent=931 rss=123MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+814s sent=945 rss=143MB
+[load] t+814s sent=946 rss=143MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+834s sent=960 rss=144MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+876s sent=991 rss=149MB
+[load] t+881s sent=992 rss=147MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+898s sent=1007 rss=129MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+920s sent=1022 rss=145MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+941s sent=1037 rss=130MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+962s sent=1052 rss=167MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+983s sent=1067 rss=210MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1005s sent=1082 rss=250MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1028s sent=1095 rss=249MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1079s sent=1125 rss=153MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1102s sent=1142 rss=154MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1151s sent=1170 rss=241MB
+[load] t+1151s sent=1171 rss=241MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1174s sent=1186 rss=158MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1201s sent=1202 rss=158MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1251s sent=1231 rss=160MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1278s sent=1247 rss=162MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1301s sent=1261 rss=163MB
+[load] t+1308s sent=1262 rss=163MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1327s sent=1275 rss=164MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1357s sent=1292 rss=165MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1381s sent=1306 rss=166MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1412s sent=1321 rss=167MB
+[load] t+1412s sent=1322 rss=167MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1438s sent=1337 rss=167MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1462s sent=1351 rss=169MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1546s sent=1395 rss=172MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1551s sent=1397 rss=172MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET
+[load] t+1577s sent=1410 rss=173MB
+[load] t+1577s sent=1411 rss=173MB
+[load] lỗi bắn tin: read ECONNRESET
+[load] lỗi bắn tin: read ECONNRESET

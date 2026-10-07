@@ -1,0 +1,45 @@
+===== STAB-RUN-2 start 12:05:48 =====
+===== TEST MATRIX — 14 KHU VỰC (runtime thật qua API/App, offline) =====
+
+================ BẢNG KẾT QUẢ THEO KHU VỰC ================
+#         KHU VỰC         KẾT QUẢ     
+--------------------------------------
+1  Auth         16/16     PASS
+2  Onboarding   20/20     PASS
+3  Facebook     18/18     PASS
+4  Zalo         18/18     PASS
+5  Shipping     10/18     FAIL
+6  Products     15/15     PASS
+7  Conversations18/18     PASS
+8  Orders       18/18     PASS
+9  Takeover     15/15     PASS
+10 Follow-up    15/15     PASS
+11 Persistence  15/15     PASS
+12 Security     20/20     PASS
+13 PWA/UI       20/20     PASS
+14 E2E          19/19     PASS
+--------------------------------------
+
+TỔNG: 237/245 case PASS (16.1s) — tối thiểu đề bài: >=220 (14 khu vực)
+
+---- CASE FAIL ----
+  [Shipping] SH01: confirm -> shipment tự tạo với tracking MOCK-<order_code>
+        -> draft tạo cho sh1
+  [Shipping] SH03: carrier.setStatus PICKED_UP -> onCarrierStatus -> display SHIPPING
+        -> draft tạo cho sh2
+  [Shipping] SH04: DELIVERED -> order DELIVERED + follow-up lập lịch (core)
+        -> draft tạo cho sh3
+  [Shipping] SH05: carrier hủy được -> CANCELLED qua carrier path (P3B-5)
+        -> draft tạo cho sh4
+  [Shipping] SH06: carrier REFUSE -> CANCEL_PENDING + needsHuman (không hủy lửng)
+        -> draft tạo cho sh5
+  [Shipping] SH12: mock carrier từ chối hủy đơn ĐÃ GIAO -> CANCEL_PENDING (already_delivered)
+        -> draft tạo cho sh6
+  [Shipping] SH14: status UNKNOWN khi chưa set -> display vẫn CONFIRMED (không vỡ)
+        -> draft tạo cho sh7
+  [Shipping] SH16: cancelShipment idempotent: hủy 2 lần cùng key -> 1 receipt
+        -> draft tạo cho sh8
+
+==> CHƯA ĐẠT (cần >=220 PASS).
+EXIT_CODE=124 (124=timeout kill: runner khong tu exit)
+end 12:08:18

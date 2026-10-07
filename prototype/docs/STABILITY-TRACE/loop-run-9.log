@@ -1,0 +1,86 @@
+===== LOOP-RUN-9 12:21:45 =====
+===== TEST MATRIX — 14 KHU VỰC (runtime thật qua API/App, offline) =====
+
+[05:21:45] AREA Auth — setup...
+[05:21:45] AREA Auth — 16/16 (0.8s)
+
+[05:21:45] AREA Onboarding — setup...
+[05:21:45]   FAIL Onboarding/OB12 (2ms): Expected values to be strictly equal: | 
+[05:21:46] AREA Onboarding — 19/20 (0.3s)
+
+[05:21:46] AREA Facebook — setup...
+[05:21:46] AREA Facebook — 18/18 (0.1s)
+
+[05:21:46] AREA Zalo — setup...
+[05:21:46]   FAIL Zalo/ZL08 (1ms): có consumeCS: []
+[05:21:46]   FAIL Zalo/ZL16 (4ms): The expression evaluated to a falsy value: | 
+[05:21:46] AREA Zalo — 16/18 (0.1s)
+
+[05:21:46] AREA Shipping — setup...
+[05:21:46] AREA Shipping — 18/18 (0.3s)
+
+[05:21:46] AREA Products — setup...
+[05:21:46] AREA Products — 15/15 (0.2s)
+
+[05:21:46] AREA Conversations — setup...
+[05:21:47]   FAIL Conversations/CV05 (4ms): The expression evaluated to a falsy value: | 
+[05:21:47]   FAIL Conversations/CV17 (2ms): The expression evaluated to a falsy value: | 
+[05:21:47] AREA Conversations — 16/18 (0.2s)
+
+[05:21:47] AREA Orders — setup...
+[05:21:47] AREA Orders — 18/18 (0.8s)
+
+[05:21:47] AREA Takeover — setup...
+[05:21:48] AREA Takeover — 15/15 (0.1s)
+
+[05:21:48] AREA Follow-up — setup...
+[05:21:56] AREA Follow-up — 15/15 (8.1s)
+
+[05:21:56] AREA Persistence — setup...
+[05:21:56] AREA Persistence — 15/15 (0.1s)
+
+[05:21:56] AREA Security — setup...
+[05:21:57] AREA Security — 20/20 (1s)
+
+[05:21:57] AREA PWA/UI — setup...
+[05:21:57] AREA PWA/UI — 20/20 (0.1s)
+
+[05:21:57] AREA E2E — setup...
+[05:22:01] AREA E2E — 19/19 (4s)
+
+================ BẢNG KẾT QUẢ THEO KHU VỰC ================
+#         KHU VỰC         KẾT QUẢ     
+--------------------------------------
+1  Auth         16/16     PASS
+2  Onboarding   19/20     FAIL
+3  Facebook     18/18     PASS
+4  Zalo         16/18     FAIL
+5  Shipping     18/18     PASS
+6  Products     15/15     PASS
+7  Conversations16/18     FAIL
+8  Orders       18/18     PASS
+9  Takeover     15/15     PASS
+10 Follow-up    15/15     PASS
+11 Persistence  15/15     PASS
+12 Security     20/20     PASS
+13 PWA/UI       20/20     PASS
+14 E2E          19/19     PASS
+--------------------------------------
+
+TỔNG: 240/245 case PASS (16.3s) — tối thiểu đề bài: >=220 (14 khu vực)
+
+---- CASE FAIL ----
+  [Onboarding] OB12: đủ checklist -> canGoLive true, progress 6/7 (chưa test)
+        -> Expected values to be strictly equal: |  | '7/7' !== '6/7'
+  [Zalo] ZL08: tin CS Zalo được chấp nhận -> platform trừ quota (consumeCs)
+        -> có consumeCS: []
+  [Zalo] ZL16: chốt đơn zalo qua chat + confirm -> CONFIRMED (đúng flow Zalo)
+        -> The expression evaluated to a falsy value: |  |   assert.ok(draft)
+  [Conversations] CV05: detail: draft.missing chính xác (items→name/phone/address)
+        -> The expression evaluated to a falsy value: |  |   assert.ok(fin.json.draft.missing.includes('phone'))
+  [Conversations] CV17: claim luồng khiếu nại -> close-claim restore đúng origin
+        -> The expression evaluated to a falsy value: |  |   assert.ok(conv.claim)
+
+==> CHƯA ĐẠT (cần >=220 PASS).
+EXIT_CODE=1
+EXIT_CODE=1

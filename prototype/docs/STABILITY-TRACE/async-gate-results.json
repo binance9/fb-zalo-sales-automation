@@ -1,0 +1,115 @@
+{
+  "results": [
+    {
+      "id": "P2",
+      "desc": "takeover giữa lúc AI chờ -> reply muộn REJECT takeover, khách 0 tin",
+      "ok": true,
+      "note": "drain 8ms, takeover 1ms, loop max-gap 19ms"
+    },
+    {
+      "id": "P3",
+      "desc": "bot OFF giữa lúc AI chờ -> reply muộn REJECT bot_off",
+      "ok": true,
+      "note": "audit REJECTED:bot_off + metric"
+    },
+    {
+      "id": "P4",
+      "desc": "khách đổi ý giữa lúc AI chờ -> câu tư vấn cũ KHÔNG gửi (stale_user_change)",
+      "ok": true,
+      "note": "tin đổi ý xử lý 5ms; reply cũ REJECT stale_user_change"
+    },
+    {
+      "id": "P6",
+      "desc": "5 khách đồng thời (AI chậm) -> đúng reply/đúng conv, không cross-talk",
+      "ok": true,
+      "note": "5/5 reply đúng SP, 0 cross-talk, 5 lần bắn 10ms"
+    },
+    {
+      "id": "P7",
+      "desc": "restart giữa xử lý và gửi (persist) -> không dup send, không mất job",
+      "ok": true,
+      "note": "dup=0, mất=0, follow-up idem"
+    },
+    {
+      "id": "P8",
+      "desc": "send chưa rõ kết quả (platform timeout) -> đối soát receipt, KHÔNG retry mù",
+      "ok": true,
+      "note": "1 send, SENT_PENDING_RECEIPT -> DELIVERED qua receipt, 0 blind retry"
+    },
+    {
+      "id": "P5",
+      "desc": "shop timeout 3s: reply fallback về ~3s (transport thật, không phải 6s mock / 8s default)",
+      "ok": true,
+      "note": "first_reply 3159ms (timeout shop=3000ms)"
+    },
+    {
+      "id": "P6h",
+      "desc": "5 khách đồng thời qua HTTP (AI chậm 6s): mỗi conv đúng 1 reply, không mất/lặp",
+      "ok": true,
+      "note": "5 conv x (1 in, 1 out, run DONE)"
+    },
+    {
+      "id": "P1",
+      "desc": "AI chờ 6s: health + takeover + botoff + đổi ý đều trả < 300ms (HTTP thật)",
+      "ok": true,
+      "note": "post 9ms | health 13ms | takeover 5ms | botoff 4ms | change 10ms"
+    }
+  ],
+  "table": [
+    {
+      "proof": "P2",
+      "send": 1791287054516,
+      "suspended": 1791287054524,
+      "takeover_ms": 1,
+      "event_loop_max_gap": "19ms",
+      "outcome": "REJECTED:takeover, 0 tin tới khách"
+    },
+    {
+      "proof": "P3",
+      "outcome": "REJECTED:bot_off, 0 tin tới khách"
+    },
+    {
+      "proof": "P4",
+      "change_processed_ms": 5,
+      "outcome": "REJECT stale_user_change, tin đổi ý vẫn xử lý"
+    },
+    {
+      "proof": "P6",
+      "fire5_ms": 10,
+      "loop_max_gap": "0ms",
+      "per_conv": "p6-a:165000 p6-b:175000 p6-c:145000 p6-d:399000 p6-e:529000"
+    },
+    {
+      "proof": "P7",
+      "outcome": "dup=0, tin vào nguyên vẹn, follow-up chạy đúng 1 lần sau restart"
+    },
+    {
+      "proof": "P8",
+      "sends": 1,
+      "platform_calls": 1,
+      "delivery": "DELIVERED"
+    },
+    {
+      "proof": "P5(HTTP)",
+      "first_reply_ms": 3159,
+      "expected": "≈3000 (curl --max-time theo shop), mock=6000, default=8000",
+      "outcome": "fallback đúng hạn"
+    },
+    {
+      "proof": "P6(HTTP)",
+      "total_in": 5,
+      "total_out": 5,
+      "runs": "5 DONE"
+    },
+    {
+      "proof": "P1(HTTP)",
+      "price_post_ms": 9,
+      "health_ms": 13,
+      "takeover_ms": 5,
+      "botoff_ms": 4,
+      "change_ms": 10,
+      "outcome": "0 tin muộn; REJECTED:bot_off"
+    }
+  ],
+  "at": "2026-10-06T11:44:33.053Z"
+}

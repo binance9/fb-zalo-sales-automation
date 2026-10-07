@@ -1,0 +1,379 @@
+  [PASS] case  1 — Khách hỏi giá — giá từ DB, không phải lời AI
+  [PASS] case  2 — Hỏi size/màu — liệt kê đúng biến thể + tồn hiệu dụng từ DB
+  [PASS] case  3 — Ảnh "còn cái này không?" — vision match + media local_path; match yếu -> NEEDS_HUMAN
+  [PASS] case  4 — Voice — ASR trước rồi vào pipeline text như thường; ASR fail -> NEEDS_HUMAN
+  [PASS] case  5 — Đổi sản phẩm giữa hội thoại — hủy DRAFT cũ, hoàn reserve, slot độc lập giữ nguyên
+  [PASS] case  6 — Mua nhiều SKU — order_items ≥2, trừ đúng stock; 1 variant hết -> rollback toàn bộ
+  [PASS] case  7 — Thiếu địa chỉ — không tạo đơn, hỏi đúng trường thiếu, state giữ COLLECT_ORDER
+  [PASS] case  8 — AI định báo sai giá ("giá sốc" -50%) — gate đè bằng giá DB 185000
+  [PASS] case  9 — Hết hàng giữa chat và chốt — pha B re-validate, không oversell
+  [PASS] case 10 — Webhook DUPLICATE — lần 2 bị bỏ, chỉ 1 reply, dedupe_hit=1
+  [PASS] case 11 — Gửi tin timeout — TIMEOUT_UNKNOWN -> check receipt -> DONE; không có tin thứ 2
+  [PASS] case 12 — Tạo vận đơn timeout — retry mù bị CHẶN -> DLQ; reconcile tra cứu mã -> không bao giờ 2 vận đơn
+  [PASS] case 13 — Khách khiếu nại — mode HUMAN (system), chỉ template an ủi, hủy follow-up marketing
+  [PASS] case 14 — Không đủ evidence — nhận không biết, câu an toàn + NEEDS_HUMAN, không đoán bừa
+  [PASS] case 15 — Human takeover — AI ngừng auto-send, nhân viên gửi được, job AI bị hủy sạch
+  [PASS] case 16 — Nhân viên trả quyền — AI propose lại, state giữ nguyên, không mâu thuẫn lời nhân viên
+  [PASS] case 17 — Follow-up sau giao hàng — +2 ngày ngoài window FB -> HELD; khách nhắn lại -> gửi đúng 1 lần (có receipt)
+  [PASS] case 18 — Từ chối marketing — opt-out chặn marketing, tin transactional vẫn đi
+
+================= KẾT QUẢ 18 CASE =================
+#   KẾT QUẢ  MÔ TẢ                                                                       GHI CHÚ
+------------------------------------------------------------------------------------------------------------------------
+1   PASS     Khách hỏi giá — giá từ DB, không phải lời AI                                23ms
+2   PASS     Hỏi size/màu — liệt kê đúng biến thể + tồn hiệu dụng từ DB                  6ms
+3   PASS     Ảnh "còn cái này không?" — vision match + media local_path; match yếu -> N  13ms
+4   PASS     Voice — ASR trước rồi vào pipeline text như thường; ASR fail -> NEEDS_HUMA  12ms
+5   PASS     Đổi sản phẩm giữa hội thoại — hủy DRAFT cũ, hoàn reserve, slot độc lập giữ  19ms
+6   PASS     Mua nhiều SKU — order_items ≥2, trừ đúng stock; 1 variant hết -> rollback   27ms
+7   PASS     Thiếu địa chỉ — không tạo đơn, hỏi đúng trường thiếu, state giữ COLLECT_OR  14ms
+8   PASS     AI định báo sai giá ("giá sốc" -50%) — gate đè bằng giá DB 185000           6ms
+9   PASS     Hết hàng giữa chat và chốt — pha B re-validate, không oversell              16ms
+10  PASS     Webhook DUPLICATE — lần 2 bị bỏ, chỉ 1 reply, dedupe_hit=1                  5ms
+11  PASS     Gửi tin timeout — TIMEOUT_UNKNOWN -> check receipt -> DONE; không có tin t  14ms
+12  PASS     Tạo vận đơn timeout — retry mù bị CHẶN -> DLQ; reconcile tra cứu mã -> khô  31ms
+13  PASS     Khách khiếu nại — mode HUMAN (system), chỉ template an ủi, hủy follow-up m  25ms
+14  PASS     Không đủ evidence — nhận không biết, câu an toàn + NEEDS_HUMAN, không đoán  9ms
+15  PASS     Human takeover — AI ngừng auto-send, nhân viên gửi được, job AI bị hủy sạc  10ms
+16  PASS     Nhân viên trả quyền — AI propose lại, state giữ nguyên, không mâu thuẫn lờ  23ms
+17  PASS     Follow-up sau giao hàng — +2 ngày ngoài window FB -> HELD; khách nhắn lại   27ms
+18  PASS     Từ chối marketing — opt-out chặn marketing, tin transactional vẫn đi        27ms
+------------------------------------------------------------------------------------------------------------------------
+TỔNG: 18/18 PASS, 0 FAIL
+==> 18/18 — HỆ THỐNG ĐẠT.
+  [PASS] vùng 1 — INV-1 DUPLICATE EVENT (27ms)
+  [PASS] vùng 2 — INV-2 OUTBOUND UNKNOWN (63ms)
+  [PASS] vùng 3 — INV-3 DUPLICATE ORDER (77ms)
+  [PASS] vùng 4 — INV-4 STOCK/PRICE RACE (58ms)
+  [PASS] vùng 5 — HALLUCINATED PRICE (gate đè DB) (16ms)
+  [PASS] vùng 6 — INV-5 HUMAN TAKEOVER (75ms)
+
+=============== KẾT QUẢ FAILURE INJECTION 6 VÙNG ===============
+TỔNG: 6/6 vùng PASS, 0 FAIL
+==> 6/6 — CẢ 6 VÙNG RỦI RO CAO ĐƯỢC PHÒNG THỦ THẬT (prototype-mock).
+  [PASS] A1 — BL-3 BUY: phone -> model_ctx contains phone = false (18ms)
+  [PASS] A2 — BL-3 CHITCHAT/AFTER_SALES/CLAIM: address/name -> false/false; CLAIM không đưa gì vào model (78ms)
+  [PASS] A3 — BL-8 system bypass HUMAN (ai_reply + text tự do) -> REJECT, sentCalls = 0 (8ms)
+  [PASS] A4 — BL-8 system template hợp lệ ACK_DLQ -> AUTHORIZED, template_id logged; sai kind/text -> REJECT (8ms)
+  [PASS] A5 — BL-9 crash sau sendMessage -> retry -> exactly 1 external send (7ms)
+  [PASS] A6 — BL-9 crash sau DB insert (inbound/proposal) -> retry -> exactly 1 logical row (13ms)
+  [PASS] A7 — BL-9 generator khác text giữa retries -> idempotency identity KHÔNG đổi (7ms)
+
+=============== KẾT QUẢ GATE A (P3A) ===============
+TỔNG: 7/7 PASS, 0 FAIL
+==> GATE A 7/7 — BL-3 + BL-8 + BL-9 đóng, có bằng chứng injection (prototype-mock).
+  [PASS] P3B-1a (hạng mục 1) — mua lại cùng giỏ từ ORDERED -> đơn #2 THẬT song song, 2 xác nhận
+  [PASS] P3B-1b (hạng mục 1) — re-entry từ AFTER_SALES + tin mua lại luôn được trả lời
+  [PASS] P3B-2a (hạng mục 2) — TTL release: quá hạn -> scheduler hoàn reservation, tồn khả dụng trở lại
+  [PASS] P3B-2b (hạng mục 2) — confirm sau expire -> không dùng reservation cũ, re-validate giá/tồn mới
+  [PASS] P3B-3a (hạng mục 3) — sdt-không-thành-qty (903123456) — probe + E2E
+  [PASS] P3B-3b (hạng mục 3) — qty hợp lệ vẫn nhận: multi-SKU, đơn vị, số trước tên SP
+  [PASS] P3B-4a (hạng mục 4) — false-positive đừng claim: "chưa thấy bảng size" -> AI vẫn trả lời
+  [PASS] P3B-4b (hạng mục 4) — claim thật vào HUMAN + fillSlots không auto-send + closeClaim về đúng state
+  [PASS] P3B-5a (hạng mục 5) — cancel trước shipment (draft + CONFIRMED chưa có vận đơn) + restock
+  [PASS] P3B-5b (hạng mục 5) — cancel có shipment qua adapter (idem key riêng + receipt) + restock
+  [PASS] P3B-5c (hạng mục 5) — carrier từ chối -> CANCEL_PENDING + needsHuman, không huỷ lửng
+
+=================== KẾT QUẢ P3B SALES CORRECTNESS ===================
+#        HM  KẾT QUẢ MÔ TẢ                                                                         GHI CHÚ
+--------------------------------------------------------------------------------------------------------------------------
+P3B-1a   1   PASS    mua lại cùng giỏ từ ORDERED -> đơn #2 THẬT song song, 2 xác nhận              73ms
+P3B-1b   1   PASS    re-entry từ AFTER_SALES + tin mua lại luôn được trả lời                       33ms
+P3B-2a   2   PASS    TTL release: quá hạn -> scheduler hoàn reservation, tồn khả dụng trở lại      29ms
+P3B-2b   2   PASS    confirm sau expire -> không dùng reservation cũ, re-validate giá/tồn mới      25ms
+P3B-3a   3   PASS    sdt-không-thành-qty (903123456) — probe + E2E                                 15ms
+P3B-3b   3   PASS    qty hợp lệ vẫn nhận: multi-SKU, đơn vị, số trước tên SP                       33ms
+P3B-4a   4   PASS    false-positive đừng claim: "chưa thấy bảng size" -> AI vẫn trả lời            21ms
+P3B-4b   4   PASS    claim thật vào HUMAN + fillSlots không auto-send + closeClaim về đúng state   31ms
+P3B-5a   5   PASS    cancel trước shipment (draft + CONFIRMED chưa có vận đơn) + restock           42ms
+P3B-5b   5   PASS    cancel có shipment qua adapter (idem key riêng + receipt) + restock           28ms
+P3B-5c   5   PASS    carrier từ chối -> CANCEL_PENDING + needsHuman, không huỷ lửng                28ms
+--------------------------------------------------------------------------------------------------------------------------
+TỔNG: 11/11 PASS, 0 FAIL
+==> P3B 11/11 — 5 HẠNG MỤC SALES CORRECTNESS ĐÓNG (prototype-mock).
+  [PASS] C1.1 (BL-1) — vừa nhắn <24h AUTO->ALLOW; last_user_event_ts do gateway ghi; bot send/receipt không refresh
+  [PASS] C1.2 (BL-1) — im >24h ai_reply -> REJECT fb_window_closed, 0 platform call
+  [PASS] C1.3 (BL-1) — follow-up care/marketing ngoài 24h -> HELD; khách nhắn lại -> gửi đúng 1 lần
+  [PASS] C1.4 (BL-1) — utility template mock-approved (ACK_DLQ) -> ALLOW; care không lách được
+  [PASS] C1.5 (BL-1) — bot gắn human_agent ở mode AI -> REJECT; người thật mode HUMAN -> ALLOW
+  [PASS] C2.1 (BL-2) — remain=8 -> send; remain -> 7 (budget + platform)
+  [PASS] C2.2 (BL-2) — remain=2 -> NEEDS_HUMAN (không auto, không trừ); follow-up -> HELD
+  [PASS] C2.3 (BL-2) — remain=0 -> REJECT cứng, 0 platform call
+  [PASS] C2.4 (BL-2) — 2 worker "đồng thời" remain=1 -> exactly 1 send (nguyên tử)
+  [PASS] C2.5 (BL-2) — transactional đúng kind -> KHÔNG trừ CS quota (B8)
+  [PASS] C2.6 (BL-2) — gom tin: cap 2 tin CS/turn; remain thấp -> gộp còn 1/turn
+  [PASS] C3.1 (BL-5) — send chưa receipt -> SENT_PENDING_RECEIPT + outbound_pending PENDING
+  [PASS] C3.2 (BL-5) — receipt tới -> DELIVERED (message + op + exec DONE)
+  [PASS] C3.3 (BL-5) — duplicate receipt (resend webhook) -> idempotent, không double-match
+  [PASS] C3.4 (BL-5) — receipt lạ (conv lạ / ngoài window) -> không gắn nhầm
+  [PASS] C3.5 (BL-5) — không bao giờ có receipt -> max attempts -> DLQ + HUMAN, không blind resend
+  [PASS] C4.1 (BL-6) — cross-product price (145000=giá trà) -> OVERRIDE, không lọt
+  [PASS] C4.2 (BL-6) — giá subject (185000) -> ALLOW
+  [PASS] C4.3 (BL-6) — tổng đơn snapshot + tổng giỏ (tổ hợp, kèm fee) -> ALLOW
+  [PASS] C4.4 (BL-6) — phí ship 25000 có evidence -> ALLOW
+  [PASS] C4.5 (BL-6) — 1 câu sai + 2 câu đúng -> chỉ câu sai bị thay bằng render DB
+  [PASS] C5.1 (BL-7) — success: PENDING_RECEIPT trước -> receipt -> SENT
+  [PASS] C5.2 (BL-7) — TIMEOUT_UNKNOWN -> PENDING_RECEIPT (không SENT vô điều kiện)
+  [PASS] C5.3 (BL-7) — definite fail (5xx) -> FAILED + worklist
+  [PASS] C5.4 (BL-7) — 2 follow-up khác ID cùng text -> 2 sends (idem theo follow_up_id)
+  [PASS] C5.5 (BL-7) — retry cùng follow_up_id -> 1 send
+  [PASS] C5.6 (BL-7) — DLQ -> follow-up FAILED + ACK_DLQ đúng 1 lần
+  [PASS] C6.1 (P3C) — SendPolicy một chỗ: window/quota/opt-out/actor/utility duyệt tại authorize
+
+================ KẾT QUẢ P3C PLATFORM CONSTRAINTS ================
+#       BL    KẾT QUẢ MÔ TẢ                                                                           GHI CHÚ
+----------------------------------------------------------------------------------------------------------------------------
+C1.1    BL-1  PASS    vừa nhắn <24h AUTO->ALLOW; last_user_event_ts do gateway ghi; bot send/receipt  17ms
+C1.2    BL-1  PASS    im >24h ai_reply -> REJECT fb_window_closed, 0 platform call                    8ms
+C1.3    BL-1  PASS    follow-up care/marketing ngoài 24h -> HELD; khách nhắn lại -> gửi đúng 1 lần    20ms
+C1.4    BL-1  PASS    utility template mock-approved (ACK_DLQ) -> ALLOW; care không lách được         9ms
+C1.5    BL-1  PASS    bot gắn human_agent ở mode AI -> REJECT; người thật mode HUMAN -> ALLOW         8ms
+C2.1    BL-2  PASS    remain=8 -> send; remain -> 7 (budget + platform)                               6ms
+C2.2    BL-2  PASS    remain=2 -> NEEDS_HUMAN (không auto, không trừ); follow-up -> HELD              5ms
+C2.3    BL-2  PASS    remain=0 -> REJECT cứng, 0 platform call                                        4ms
+C2.4    BL-2  PASS    2 worker "đồng thời" remain=1 -> exactly 1 send (nguyên tử)                     7ms
+C2.5    BL-2  PASS    transactional đúng kind -> KHÔNG trừ CS quota (B8)                              21ms
+C2.6    BL-2  PASS    gom tin: cap 2 tin CS/turn; remain thấp -> gộp còn 1/turn                       13ms
+C3.1    BL-5  PASS    send chưa receipt -> SENT_PENDING_RECEIPT + outbound_pending PENDING            4ms
+C3.2    BL-5  PASS    receipt tới -> DELIVERED (message + op + exec DONE)                             4ms
+C3.3    BL-5  PASS    duplicate receipt (resend webhook) -> idempotent, không double-match            6ms
+C3.4    BL-5  PASS    receipt lạ (conv lạ / ngoài window) -> không gắn nhầm                           5ms
+C3.5    BL-5  PASS    không bao giờ có receipt -> max attempts -> DLQ + HUMAN, không blind resend     9ms
+C4.1    BL-6  PASS    cross-product price (145000=giá trà) -> OVERRIDE, không lọt                     7ms
+C4.2    BL-6  PASS    giá subject (185000) -> ALLOW                                                   7ms
+C4.3    BL-6  PASS    tổng đơn snapshot + tổng giỏ (tổ hợp, kèm fee) -> ALLOW                         27ms
+C4.4    BL-6  PASS    phí ship 25000 có evidence -> ALLOW                                             13ms
+C4.5    BL-6  PASS    1 câu sai + 2 câu đúng -> chỉ câu sai bị thay bằng render DB                    8ms
+C5.1    BL-7  PASS    success: PENDING_RECEIPT trước -> receipt -> SENT                               10ms
+C5.2    BL-7  PASS    TIMEOUT_UNKNOWN -> PENDING_RECEIPT (không SENT vô điều kiện)                    6ms
+C5.3    BL-7  PASS    definite fail (5xx) -> FAILED + worklist                                        8ms
+C5.4    BL-7  PASS    2 follow-up khác ID cùng text -> 2 sends (idem theo follow_up_id)               11ms
+C5.5    BL-7  PASS    retry cùng follow_up_id -> 1 send                                               9ms
+C5.6    BL-7  PASS    DLQ -> follow-up FAILED + ACK_DLQ đúng 1 lần                                    13ms
+C6.1    P3C   PASS    SendPolicy một chỗ: window/quota/opt-out/actor/utility duyệt tại authorize      11ms
+----------------------------------------------------------------------------------------------------------------------------
+TỔNG: 28/28 PASS, 0 FAIL
+==> P3C 28/28 — 5 BLOCKER NỀN TẢNG ĐÓNG (prototype-mock).
+===== P2 LIVE-INTEGRATION BATTERY (offline — mock http, dependency injection) =====
+  [PASS] M1 (META) — signature VALID: HMAC-SHA256(raw, appSecret) khớp X-Hub-Signature-256 -> PASS
+  [PASS] M2 (META) — signature INVALID: body sửa/header sai/thiếu header/verify token sai -> FAIL
+  [PASS] M3 (META) — normalize TEXT: mid -> platformEventId, PSID -> customer_ref, có timestamp_platform
+  [PASS] M4 (META) — normalize COMMENT (feed): comment_id -> platformEventId, fbuser:<id> -> customer_ref
+  [PASS] M5 (META) — normalize DELIVERY/READ/ECHO -> receipts (message_delivery/message_read/message_echo); echo KHÔNG sinh user event (không mở window)
+  [PASS] M6 (META) — DEDUPE: cùng platform id nhận 2 lần -> lần 2 duplicate:true, khách nhận ĐÚNG 1 tin (INV-1)
+  [PASS] M7 (META) — >24h im lặng: event user cũ 25h -> Gate CHẶN auto-reply (fb_window_closed), 0 platform call (không đổi gate)
+  [PASS] M8 (META) — OUTBOUND: token đi Authorization header, KHÔNG nằm trong URL; response message_id -> ok
+  [PASS] Z1 (ZALO) — refresh SINGLE-FLIGHT: 5 gọi đồng thời (http chậm 200ms) -> đúng 1 HTTP call, cả 5 nhận token mới
+  [PASS] Z2 (ZALO) — ATOMIC save cặp token xoay vòng: file riêng ngoài dataDir test, không còn .tmp
+  [PASS] Z3 (ZALO) — normalize: user_send_text/image + audio CHỈ đánh dấu voice_not_enabled + seen=receipt + unfollow=opt_out
+  [PASS] Z4 (ZALO) — send CS: HTTP 200 + error!=0 KHÔNG được coi là thành công; error===0 mới ok; timeout -> timeout:true
+  [PASS] Z5 (ZALO) — quota: API trả cs_reply -> dùng SỐ API + source=api; API không trả field -> design_default_unverified (không fake verified)
+  [PASS] Z6 (ZALO) — webhook signature: sha256(appId+data+timeStamp+secret) khớp -> true, sai -> false
+  [PASS] G1 (GHN) — create IDEMPOTENT: cùng ClientOrderCode gọi 2 lần -> HTTP create chỉ 1 lần, trả đúng đơn cũ (INV-3)
+  [PASS] G2 (GHN) — response code lỗi (HTTP 200 + code!=200) -> KHÔNG coi là thành công (REJECTED rõ)
+  [PASS] G3 (GHN) — create TIMEOUT lần 1 -> attempt sau TRA CỨU detail trước: thấy ALREADY_EXISTS -> dùng tracking cũ, KHÔNG create lại (INV-2)
+  [PASS] G4 (GHN) — cancel IDEMPOTENT: 2 lần -> 1 HTTP cancel, cùng receipt; carrier từ chối -> REJECTED rõ
+  [PASS] G5 (GHN) — webhook status: normalize IDEMPOTENT (cùng payload lần 2 duplicate) + getStatus đọc cache không HTTP
+  [PASS] P1 (PERSISTENCE) — persist=true: 3 tin + 1 đơn -> restart x3 (App mới cùng dir) -> counts + SHA256 db.json GIỮ NGUYÊN, có db.backup.json
+  [PASS] P2 (PERSISTENCE) — persist=false (mặc định): dataDir vẫn bị reset — regression test suite giữ nguyên hành vi cũ
+  [PASS] S1 (SECRETS) — live-mode GIẢ: status health/UI (providerStatus cả 3 adapter) KHÔNG chứa chuỗi token/secret nào
+  [PASS] S2 (SECRETS) — redactSecret/redactDeep: chỉ *** + 4 ký tự cuối; JSON debug không lộ nguyên giá trị
+  [PASS] S3 (SECRETS) — env-mini: .env.live tồn tại (giá trị rỗng) — parser KHÔNG override env có sẵn; parse đúng KEY=VALUE
+  [PASS] W1 (WIRING) — env chọn adapter: mặc định mock -> factory trả null (App dùng Mock); live/ghn -> đúng adapter + router chia kênh
+  [PASS] W2 (WIRING) — App live wiring: truyền externals -> App dùng adapter thật cùng interface (gate gọi được sendMessage)
+
+================ KẾT QUẢ P2 LIVE-INTEGRATION ================
+#     NHÓM          KẾT QUẢ MÔ TẢ                                                                                     GHI CHÚ
+----------------------------------------------------------------------------------------------------------------------------------
+M1    META          PASS    signature VALID: HMAC-SHA256(raw, appSecret) khớp X-Hub-Signature-256 -> PASS             1ms
+M2    META          PASS    signature INVALID: body sửa/header sai/thiếu header/verify token sai -> FAIL              1ms
+M3    META          PASS    normalize TEXT: mid -> platformEventId, PSID -> customer_ref, có timestamp_platform       1ms
+M4    META          PASS    normalize COMMENT (feed): comment_id -> platformEventId, fbuser:<id> -> customer_ref      0ms
+M5    META          PASS    normalize DELIVERY/READ/ECHO -> receipts (message_delivery/message_read/message_echo); e  1ms
+M6    META          PASS    DEDUPE: cùng platform id nhận 2 lần -> lần 2 duplicate:true, khách nhận ĐÚNG 1 tin (INV-  14ms
+M7    META          PASS    >24h im lặng: event user cũ 25h -> Gate CHẶN auto-reply (fb_window_closed), 0 platform c  6ms
+M8    META          PASS    OUTBOUND: token đi Authorization header, KHÔNG nằm trong URL; response message_id -> ok   0ms
+Z1    ZALO          PASS    refresh SINGLE-FLIGHT: 5 gọi đồng thời (http chậm 200ms) -> đúng 1 HTTP call, cả 5 nhận   204ms
+Z2    ZALO          PASS    ATOMIC save cặp token xoay vòng: file riêng ngoài dataDir test, không còn .tmp            2ms
+Z3    ZALO          PASS    normalize: user_send_text/image + audio CHỈ đánh dấu voice_not_enabled + seen=receipt +   0ms
+Z4    ZALO          PASS    send CS: HTTP 200 + error!=0 KHÔNG được coi là thành công; error===0 mới ok; timeout ->   1ms
+Z5    ZALO          PASS    quota: API trả cs_reply -> dùng SỐ API + source=api; API không trả field -> design_defau  0ms
+Z6    ZALO          PASS    webhook signature: sha256(appId+data+timeStamp+secret) khớp -> true, sai -> false         0ms
+G1    GHN           PASS    create IDEMPOTENT: cùng ClientOrderCode gọi 2 lần -> HTTP create chỉ 1 lần, trả đúng đơn  1ms
+G2    GHN           PASS    response code lỗi (HTTP 200 + code!=200) -> KHÔNG coi là thành công (REJECTED rõ)         0ms
+G3    GHN           PASS    create TIMEOUT lần 1 -> attempt sau TRA CỨU detail trước: thấy ALREADY_EXISTS -> dùng tr  0ms
+G4    GHN           PASS    cancel IDEMPOTENT: 2 lần -> 1 HTTP cancel, cùng receipt; carrier từ chối -> REJECTED rõ   0ms
+G5    GHN           PASS    webhook status: normalize IDEMPOTENT (cùng payload lần 2 duplicate) + getStatus đọc cach  1ms
+P1    PERSISTENCE   PASS    persist=true: 3 tin + 1 đơn -> restart x3 (App mới cùng dir) -> counts + SHA256 db.json   44ms
+P2    PERSISTENCE   PASS    persist=false (mặc định): dataDir vẫn bị reset — regression test suite giữ nguyên hành v  9ms
+S1    SECRETS       PASS    live-mode GIẢ: status health/UI (providerStatus cả 3 adapter) KHÔNG chứa chuỗi token/sec  0ms
+S2    SECRETS       PASS    redactSecret/redactDeep: chỉ *** + 4 ký tự cuối; JSON debug không lộ nguyên giá trị       0ms
+S3    SECRETS       PASS    env-mini: .env.live tồn tại (giá trị rỗng) — parser KHÔNG override env có sẵn; parse đún  2ms
+W1    WIRING        PASS    env chọn adapter: mặc định mock -> factory trả null (App dùng Mock); live/ghn -> đúng ad  1ms
+W2    WIRING        PASS    App live wiring: truyền externals -> App dùng adapter thật cùng interface (gate gọi được  7ms
+----------------------------------------------------------------------------------------------------------------------------------
+TỔNG: 26/26 PASS, 0 FAIL
+==> P2 LIVE-INTEGRATION: toàn bộ adapter offline-verified (LIVE runtime CHƯA XÁC MINH — chưa có token thật).
+===== PHASE PRODUCT-READY BATTERY (offline — HTTP in-process, port 0) =====
+  [PASS] A1 (AUTH) — setup OWNER đầu tiên 200 + chặn setup lần 2 (403)
+  [PASS] A2 (AUTH) — login sai -> 401 BAD_CREDENTIALS; đúng -> 200
+  [PASS] A3 (AUTH) — rate limit: lần thứ 6 trong 1 phút -> 429 (fail-closed, server riêng)
+  [PASS] A4 (AUTH) — /api/auth/me theo cookie; logout -> me 401
+  [PASS] A5 (AUTH) — tạo ADMIN/AGENT theo role; trùng email -> 409; sai role -> 400
+  [PASS] A6 (AUTH) — role AGENT: 403 khi đụng settings/products-ghi/onboarding/ai; 200 khi đọc
+  [PASS] A7 (AUTH) — cô lập shop: A không thấy conversations/orders/products của B (và ngược lại)
+  [PASS] A8 (AUTH) — đổi mật khẩu + quên mật khẩu (reset token file local)
+  [PASS] A9 (AUTH) — cookie session: HttpOnly + SameSite=Lax + Max-Age 7 ngày (604800)
+  [PASS] A10 (AUTH) — TEST_AUTH_BYPASS: token cố định quy về OWNER (cho riêng smoke/test cũ)
+  [PASS] B1 (ONBOARD) — GET /api/onboarding: status từng bước đúng khi mới setup
+  [PASS] B2 (ONBOARD) — complete-step shop-info -> bước 1 xanh; settings auto_order off
+  [PASS] B3 (ONBOARD) — go-live gate: bật bot khi thiếu checklist -> 403 + reasons
+  [PASS] B4 (ONBOARD) — đủ checklist (fb + AI local PASS + test conv/order) -> bật bot 200
+  [PASS] B5 (ONBOARD) — token zalo/ghn lưu settings shop: settings view chỉ trả mask, không lộ raw
+  [PASS] C1 (PRODUCTS) — CRUD: POST thêm -> PUT sửa giá/tồn -> DELETE xóa mềm (enabled=false)
+  [PASS] C2 (PRODUCTS) — bulk import CSV: 2 dòng hợp lệ import + 1 dòng giá lỗi được báo
+  [PASS] C3 (PRODUCTS) — disabled filter: searchProduct không match SP tắt (4 lớp search)
+  [PASS] C4 (PRODUCTS) — regression pipeline: tắt SP -> bot không còn tư vấn SP đó
+  [PASS] C5 (PRODUCTS) — search ?q= lọc products theo tên/SKU/alias
+  [PASS] C6 (PRODUCTS) — CSV edge: thiếu header -> báo lỗi header; CSV rỗng -> CSV_TRONG; CRLF ok
+  [PASS] D1 (AI) — save config: API không trả key thô — chỉ masked ***abcd
+  [PASS] D2 (AI) — secret-in-prompt: lưu prompt config chứa sk-/token -> chặn 400
+  [PASS] D3 (AI) — test provider local -> PASS ONLINE; status có last_success
+  [PASS] D4 (AI) — test provider thật lỗi (httpFn tiêm 401) -> ERROR + last_error, không lộ key
+  [PASS] D5 (AI) — buildSystemPrompt: đủ mục cấu hình + golden rules; validate chặn secret
+  [PASS] E1 (PERSIST) — persist-mode restart giữ dữ liệu (App mới cùng dir) + db.backup.json
+  [PASS] E2 (PERSIST) — START-BOT.bat tồn tại + đúng nội dung (persist + node server.js + mở browser)
+  [PASS] E3 (BUILD) — server boot: / -> login page khi đã có user; /style.css 200; health 200 với session
+  [PASS] E4 (BUILD) — first-run: chưa có user -> GET / trả trang WELCOME tạo OWNER
+  [PASS] E6 (BUILD) — webhook mock mode: không cần auth (platform gọi) + 503 rõ ràng khi chưa bật live
+  [PASS] E5 (BUILD) — node --check toàn bộ src + server + ui + test không lỗi cú pháp
+
+================ KẾT QUẢ PRODUCT-READY ĐỢT 1 ================
+#     NHÓM        KẾT QUẢ MÔ TẢ                                                                                           GHI CHÚ
+------------------------------------------------------------------------------------------------------------------------------------
+A1    AUTH        PASS    setup OWNER đầu tiên 200 + chặn setup lần 2 (403)                                               101ms
+A2    AUTH        PASS    login sai -> 401 BAD_CREDENTIALS; đúng -> 200                                                   66ms
+A3    AUTH        PASS    rate limit: lần thứ 6 trong 1 phút -> 429 (fail-closed, server riêng)                           205ms
+A4    AUTH        PASS    /api/auth/me theo cookie; logout -> me 401                                                      33ms
+A5    AUTH        PASS    tạo ADMIN/AGENT theo role; trùng email -> 409; sai role -> 400                                  168ms
+A6    AUTH        PASS    role AGENT: 403 khi đụng settings/products-ghi/onboarding/ai; 200 khi đọc                       7ms
+A7    AUTH        PASS    cô lập shop: A không thấy conversations/orders/products của B (và ngược lại)                    17ms
+A8    AUTH        PASS    đổi mật khẩu + quên mật khẩu (reset token file local)                                           216ms
+A9    AUTH        PASS    cookie session: HttpOnly + SameSite=Lax + Max-Age 7 ngày (604800)                               26ms
+A10   AUTH        PASS    TEST_AUTH_BYPASS: token cố định quy về OWNER (cho riêng smoke/test cũ)                          57ms
+B1    ONBOARD     PASS    GET /api/onboarding: status từng bước đúng khi mới setup                                        1ms
+B2    ONBOARD     PASS    complete-step shop-info -> bước 1 xanh; settings auto_order off                                 3ms
+B3    ONBOARD     PASS    go-live gate: bật bot khi thiếu checklist -> 403 + reasons                                      1ms
+B4    ONBOARD     PASS    đủ checklist (fb + AI local PASS + test conv/order) -> bật bot 200                              48ms
+B5    ONBOARD     PASS    token zalo/ghn lưu settings shop: settings view chỉ trả mask, không lộ raw                      6ms
+C1    PRODUCTS    PASS    CRUD: POST thêm -> PUT sửa giá/tồn -> DELETE xóa mềm (enabled=false)                            18ms
+C2    PRODUCTS    PASS    bulk import CSV: 2 dòng hợp lệ import + 1 dòng giá lỗi được báo                                 7ms
+C3    PRODUCTS    PASS    disabled filter: searchProduct không match SP tắt (4 lớp search)                                1ms
+C4    PRODUCTS    PASS    regression pipeline: tắt SP -> bot không còn tư vấn SP đó                                       14ms
+C5    PRODUCTS    PASS    search ?q= lọc products theo tên/SKU/alias                                                      2ms
+C6    PRODUCTS    PASS    CSV edge: thiếu header -> báo lỗi header; CSV rỗng -> CSV_TRONG; CRLF ok                        0ms
+D1    AI          PASS    save config: API không trả key thô — chỉ masked ***abcd                                         3ms
+D2    AI          PASS    secret-in-prompt: lưu prompt config chứa sk-/token -> chặn 400                                  2ms
+D3    AI          PASS    test provider local -> PASS ONLINE; status có last_success                                      3ms
+D4    AI          PASS    test provider thật lỗi (httpFn tiêm 401) -> ERROR + last_error, không lộ key                    2ms
+D5    AI          PASS    buildSystemPrompt: đủ mục cấu hình + golden rules; validate chặn secret                         0ms
+E1    PERSIST     PASS    persist-mode restart giữ dữ liệu (App mới cùng dir) + db.backup.json                            13ms
+E2    PERSIST     PASS    START-BOT.bat tồn tại + đúng nội dung (persist + node server.js + mở browser)                   0ms
+E3    BUILD       PASS    server boot: / -> login page khi đã có user; /style.css 200; health 200 với session             4ms
+E4    BUILD       PASS    first-run: chưa có user -> GET / trả trang WELCOME tạo OWNER                                    61ms
+E6    BUILD       PASS    webhook mock mode: không cần auth (platform gọi) + 503 rõ ràng khi chưa bật live                2ms
+E5    BUILD       PASS    node --check toàn bộ src + server + ui + test không lỗi cú pháp                                 1305ms
+------------------------------------------------------------------------------------------------------------------------------------
+TỔNG: 32/32 PASS, 0 FAIL
+==> PRODUCT-READY đợt 1: click-là-chạy verified offline (auth + shop isolation + onboarding gate + products + AI + persist).
+===== E2E FLOWS A–E (PRODUCT-READY đợt 2 — offline, HTTP in-process) =====
+  [PASS] Flow A (0.2s) — comment->reply->...->tracking DELIVERED
+         -> A: comment->reply->variant->SĐT->tên->địa chỉ->bill->confirm->order->shipment->DELIVERED (8 mắt xích OK, đơn ORD9_DFA503)
+  [PASS] Flow B (0.1s) — complaint->claim->agent->closeClaim->handback->AUTO
+         -> B: complaint->claim+HUMAN->agent send (API)->closeClaim(restore ORDERED)->handback->AUTO reply
+  [PASS] Flow C (0.1s) — cancel + carrier refuse/pending + retry policy
+         -> C: cancel->carrier->CANCELLED(+restock); refuse->CANCEL_PENDING; retry refuse->pending, retry ok->CANCELLED; policy 409
+  [PASS] Flow D (7.9s) — follow-up Window/Quota/Opt-out gates -> delivered
+         -> D: Window Gate (25h -> HELD -> khách nhắn -> SENT+DELIVERED) + Quota Gate (low->HELD, 0->không gửi) + Opt-out (marketing->opt_out) OK
+  [PASS] Flow E (2.5s) — restart persist -> data + jobs chạy tiếp
+         -> E: restart persist -> counts/đơn/follow-up nguyên vẹn + session còn + follow-up chạy tiếp và SENT
+
+TỔNG: 5/5 flows PASS
+==> E2E A–E: toàn bộ chuỗi đầu-cuối CHẠY ĐÚNG.
+===== IMAGE-MATCH REGRESSION (CHANGE REQUEST duyệt: lọc SP disabled trên đường ảnh) =====
+  [PASS] IM1 — enabled: ảnh match -> subject_sku đúng + bot trả lời
+  [PASS] IM2 — disabled: ảnh CÙNG SP -> KHÔNG match, NEEDS_HUMAN, không lộ giá
+  [PASS] IM3 — disabled: getVariant/getStock/getProduct vẫn đọc được (đơn cũ không gãy)
+  [PASS] IM4 — bật lại SP -> match qua ảnh hoạt động trở lại
+  [PASS] IM5 — audit lần match-chết: proposal NEEDS_HUMAN có evidence product_disabled
+  [PASS] IM6 — node --check pipeline.js (file duy nhất của exception) không lỗi cú pháp
+
+TỔNG: 6/6 PASS
+==> IMAGE-MATCH path ĐÃ LỌC SP disabled — chính sách đồng nhất với đường TEXT.
+== SURI AGENT (P1) — orchestrator + tools + shop profile + errors/TZ ==
+   1 PASS  [S1] BUY -> AgentRun: steps UNDERSTAND->DECISION->SEND + audit AGENT_RUN + bill vẫn gửi (hành vi nguyên)  28ms
+   2 PASS  [S1b] Restart (App mới persist cùng dataDir) -> agent_runs/agent_steps GIỮ NGUYÊN  3ms
+   3 PASS  [S2] Mode HUMAN -> decision SUPPRESSED_HUMAN_MODE, KHÔNG step SEND (INV-5 quan sát được)  11ms
+   4 PASS  [S3] Ảnh không match -> run NEEDS_HUMAN (an toàn ảnh yếu quan sát được)  6ms
+   5 PASS  [S4a] Đọc loạt tool: stock/price/product/search/customer/conversation/policy/quota (8 tool)  17ms
+   6 PASS  [S4b] create_order_draft: thiếu slot -> MISSING_FIELDS; đủ slot -> draft DRAFT + reserve  8ms
+   7 PASS  [S4c] confirm_order + get_shipment_status + cancel_order (ủy quyền engine + carrier)  21ms
+   8 PASS  [S4d] send_message QUA GATE (window mở -> gửi; sau takeover -> vẫn gửi do human_agent giữ)  11ms
+   9 PASS  [S4e] NOT_CONFIGURED: GHN thiếu token -> quote_shipping/create_shipment KHÔNG giả PASS  13ms
+  10 PASS  [S4f] takeover/handback + schedule_follow_up (opt-out chặn marketing) + save_customer_note  9ms
+  11 PASS  [S4g] TOOL_TIMEOUT + listTools đủ 24 tool đúng danh sách + update_order_draft  69ms
+  12 PASS  [S5] Shop profile: chặn secret + save + prompt chứa field + profile ĐÈ prompt cũ  7ms
+  13 PASS  [S6] Errors UX: token hết hạn/GHN/AI -> tiếng Việt; fmtVnTime +7 chuẩn; roundtrip giờ VN  0ms
+  14 PASS  [S7] DeepSeek wire: đọc file THẬT của chủ + mask assert (không in key)  8ms
+  15 PASS  [S8a] Server boot + owner setup + go-live + tool registry API (/api/agent/tools: 24 tool + configured)  83ms
+  16 PASS  [S8b] /api/agent/runs: bắn tin khách qua webhook-debug -> run liệt kê + detail đủ steps  12ms
+  17 PASS  [S8c] /api/shop-profile POST/GET + /api/prompt merge profile (ưu tiên cao hơn legacy)  5ms
+  18 PASS  [S8d] Scheduler TZ: settings timezone mặc định VN + /api/automation upcoming có scheduled_at_vn  8ms
+  19 PASS  [S8e] Regression-honesty: tin khách qua server vẫn trả lời NGUYÊN (orchestrator không cản)  1ms
+----------------------------------------------------------------------------------------------------
+TỔNG: 19/19 PASS, 0 FAIL
+==> 19/19 — SURI P1 ĐẠT.
+===== SURI STABILITY CASES (S1-S6 + G + CFG) — offline =====
+  [PASS] S1 — AI chậm 5s + takeover giữa chờ -> reply muộn REJECT (takeover), khách không nhận 2 tin (5021ms)
+  [PASS] S2 — AI chậm + bot OFF giữa chờ -> reply muộn REJECT (bot_off) (2023ms)
+  [PASS] S3 — AI chậm + khách đổi ý giữa chờ -> câu tư vấn cũ không được gửi (stale_user_change) (2041ms)
+  [PASS] S4 — 5 hội thoại đồng thời -> đúng reply của mình, không cross-talk, không mất tin (725ms)
+  [PASS] S5 — crash giữa xử lý và gửi -> không gửi trùng, không tạo đơn trùng (35ms)
+  [PASS] S6 — follow-up persist qua restart -> chạy đúng hạn, đúng 1 lần (59ms)
+  [PASS] G1 — bill "Tổng tiền 92500" (bare) -> OVERRIDDEN (19ms)
+  [PASS] G2 — bill "còn 92.5k" -> OVERRIDDEN (19ms)
+  [PASS] G3 — CHITCHAT "giá 92500" -> OVERRIDDEN (22ms)
+  [PASS] G4 — FP-control: bill đúng (units + tổng bare khớp whitelist) -> AUTO_EXECUTED (23ms)
+  [PASS] G5 — FP-control: qty + mã đơn ORD5_86033D -> AUTO_EXECUTED (23ms)
+  [PASS] G6 — PRICE: đúng giá bare allowed; giá bịa bare/k -> OVERRIDDEN (23ms)
+  [PASS] G7 — FP-control: số nhà + mã đuôi HOA (86033D / 92500K) -> không thành tiền (18ms)
+  [PASS] CFG1 — default timeout LLM 8000ms; shop override được tôn trọng (6ms)
+
+TỔNG: 14/14 PASS (SURI-STABILITY)
+==> STABILITY: TOÀN BỘ PASS.
+EXIT_CODE=0
+== SURI ASYNC GATE — nghiệm thu LỖI 2 sau vá (8 proof) ==
+  [PASS] P2 — takeover giữa lúc AI chờ -> reply muộn REJECT takeover, khách 0 tin (208ms) :: drain 5ms, takeover 0ms, loop max-gap 16ms
+  [PASS] P3 — bot OFF giữa lúc AI chờ -> reply muộn REJECT bot_off (191ms) :: audit REJECTED:bot_off + metric
+  [PASS] P4 — khách đổi ý giữa lúc AI chờ -> câu tư vấn cũ KHÔNG gửi (stale_user_change) (268ms) :: tin đổi ý xử lý 7ms; reply cũ REJECT stale_user_change
+  [PASS] P6 — 5 khách đồng thời (AI chậm) -> đúng reply/đúng conv, không cross-talk (555ms) :: 5/5 reply đúng SP, 0 cross-talk, 5 lần bắn 9ms
+  [PASS] P7 — restart giữa xử lý và gửi (persist) -> không dup send, không mất job (21ms) :: dup=0, mất=0, follow-up idem
+  [PASS] P8 — send chưa rõ kết quả (platform timeout) -> đối soát receipt, KHÔNG retry mù (221ms) :: 1 send, SENT_PENDING_RECEIPT -> DELIVERED qua receipt, 0 blind retry
+  [infra] mock=63090 proto=59787 (log: docs/STABILITY-TRACE/async-after-*.log)
+  [PASS] P5 — shop timeout 3s: reply fallback về ~3s (transport thật, không phải 6s mock / 8s default) (3292ms) :: first_reply 3052ms (timeout shop=3000ms)
+  [PASS] P6h — 5 khách đồng thời qua HTTP (AI chậm 6s): mỗi conv đúng 1 reply, không mất/lặp (6325ms) :: 5 conv x (1 in, 1 out, run DONE)
+  [PASS] P1 — AI chờ 6s: health + takeover + botoff + đổi ý đều trả < 300ms (HTTP thật) (6365ms) :: post 13ms | health 18ms | takeover 7ms | botoff 5ms | change 17ms
+
+----------------------------------------------------------------
+  {"proof":"P2","send":1791284609497,"suspended":1791284609502,"takeover_ms":0,"event_loop_max_gap":"16ms","outcome":"REJECTED:takeover, 0 tin tới khách"}
+  {"proof":"P3","outcome":"REJECTED:bot_off, 0 tin tới khách"}
+  {"proof":"P4","change_processed_ms":7,"outcome":"REJECT stale_user_change, tin đổi ý vẫn xử lý"}
+  {"proof":"P6","fire5_ms":9,"loop_max_gap":"0ms","per_conv":"p6-a:165000 p6-b:175000 p6-c:145000 p6-d:399000 p6-e:529000"}
+  {"proof":"P7","outcome":"dup=0, tin vào nguyên vẹn, follow-up chạy đúng 1 lần sau restart"}
+  {"proof":"P8","sends":1,"platform_calls":1,"delivery":"DELIVERED"}
+  {"proof":"P5(HTTP)","first_reply_ms":3052,"expected":"≈3000 (curl --max-time theo shop), mock=6000, default=8000","outcome":"fallback đúng hạn"}
+  {"proof":"P6(HTTP)","total_in":5,"total_out":5,"runs":"5 DONE"}
+  {"proof":"P1(HTTP)","price_post_ms":13,"health_ms":18,"takeover_ms":7,"botoff_ms":5,"change_ms":17,"outcome":"0 tin muộn; REJECTED:bot_off"}
+
+TỔNG: 9/9 PASS
+EXIT_CODE=0

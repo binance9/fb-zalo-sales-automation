@@ -1,0 +1,64 @@
+{
+  "scenario": "repro",
+  "timestamps": {
+    "zero": {
+      "t": 38,
+      "iso": "2026-10-06T11:44:26.853Z"
+    },
+    "recv_price_post": {
+      "t": 48,
+      "iso": "2026-10-06T11:44:26.863Z",
+      "latency_ms": 9,
+      "status": 200
+    },
+    "health_during_wait": {
+      "t": 53,
+      "iso": "2026-10-06T11:44:26.868Z",
+      "latency_ms": 13,
+      "status": 200
+    },
+    "takeover_during_wait": {
+      "t": 58,
+      "iso": "2026-10-06T11:44:26.873Z",
+      "latency_ms": 5,
+      "status": 200
+    },
+    "botoff_during_wait": {
+      "t": 62,
+      "iso": "2026-10-06T11:44:26.877Z",
+      "latency_ms": 4,
+      "status": 200
+    },
+    "change_idea_post": {
+      "t": 72,
+      "iso": "2026-10-06T11:44:26.887Z",
+      "latency_ms": 10,
+      "status": 200
+    },
+    "health_after": {
+      "t": 73,
+      "iso": "2026-10-06T11:44:26.888Z",
+      "latency_ms": 1,
+      "status": 200
+    },
+    "settle": {
+      "t": 6226,
+      "iso": "2026-10-06T11:44:33.041Z",
+      "waited_ms": 6152,
+      "out_msgs": 0
+    }
+  },
+  "result": {
+    "mode": "HUMAN",
+    "out_texts": [],
+    "in_count": 2,
+    "out_count": 0,
+    "rejected": [
+      "REJECTED:bot_off"
+    ],
+    "proposals_rejected": 1,
+    "metric_takeover_rej": 0,
+    "metric_botoff_rej": 1,
+    "metric_stale_rej": 0
+  }
+}

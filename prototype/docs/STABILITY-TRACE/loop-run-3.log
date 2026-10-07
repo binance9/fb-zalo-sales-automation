@@ -1,0 +1,101 @@
+===== LOOP-RUN-3 12:20:07 =====
+===== TEST MATRIX — 14 KHU VỰC (runtime thật qua API/App, offline) =====
+
+[05:20:08] AREA Auth — setup...
+[05:20:08] AREA Auth — 16/16 (0.8s)
+
+[05:20:08] AREA Onboarding — setup...
+[05:20:09] AREA Onboarding — 20/20 (0.3s)
+
+[05:20:09] AREA Facebook — setup...
+[05:20:09] AREA Facebook — 18/18 (0.1s)
+
+[05:20:09] AREA Zalo — setup...
+[05:20:09] AREA Zalo — 18/18 (0.1s)
+
+[05:20:09] AREA Shipping — setup...
+[05:20:09] AREA Shipping — 18/18 (0.3s)
+
+[05:20:09] AREA Products — setup...
+[05:20:09] AREA Products — 15/15 (0.2s)
+
+[05:20:09] AREA Conversations — setup...
+[05:20:10] AREA Conversations — 18/18 (0.2s)
+
+[05:20:10] AREA Orders — setup...
+[05:20:10] AREA Orders — 18/18 (0.6s)
+
+[05:20:10] AREA Takeover — setup...
+[05:20:10] AREA Takeover — 15/15 (0.1s)
+
+[05:20:10] AREA Follow-up — setup...
+[05:20:18] AREA Follow-up — 15/15 (8.1s)
+
+[05:20:18] AREA Persistence — setup...
+[05:20:19] AREA Persistence — 15/15 (0.1s)
+
+[05:20:19] AREA Security — setup...
+[05:20:20] AREA Security — 20/20 (1s)
+
+[05:20:20] AREA PWA/UI — setup...
+[05:20:20] AREA PWA/UI — 20/20 (0.1s)
+
+[05:20:20] AREA E2E — setup...
+[05:20:20]   FAIL E2E/E2E-A2 (10ms): state=AFTER_SALES
+[05:20:20]   FAIL E2E/E2E-A3 (0ms): Cannot read properties of null (reading 'order_id')
+[05:20:20]   FAIL E2E/E2E-A4 (1ms): Cannot read properties of undefined (reading 'order_id')
+[05:20:20]   FAIL E2E/E2E-B1 (6ms): The expression evaluated to a falsy value: | 
+[05:20:20]   FAIL E2E/E2E-C1 (7ms): draft u-cx
+[05:20:20]   FAIL E2E/E2E-C2 (8ms): draft u-cy
+[05:20:20]   FAIL E2E/E2E-D1 (7ms): draft u-dx slots={"name":{"value":"Khach udx","state":"detected"},"phone":{"value":"0931001916","state":"confirmed"},"address":{"value":"u-dx Street Q1","state"
+[05:20:20]   FAIL E2E/E2E-E1 (11ms): draft u-ex slots={"name":{"value":"Khach uex","state":"detected"},"phone":{"value":"0931001916","state":"confirmed"},"address":{"value":"u-ex Street Q1","state"
+[05:20:20]   FAIL E2E/E2E-E3 (27ms): follow-up u-ex còn SCHEDULED sau restart
+[05:20:20]   FAIL E2E/E2E-G3 (5ms): draft u-zx
+[05:20:22] AREA E2E — 9/19 (2s)
+
+================ BẢNG KẾT QUẢ THEO KHU VỰC ================
+#         KHU VỰC         KẾT QUẢ     
+--------------------------------------
+1  Auth         16/16     PASS
+2  Onboarding   20/20     PASS
+3  Facebook     18/18     PASS
+4  Zalo         18/18     PASS
+5  Shipping     18/18     PASS
+6  Products     15/15     PASS
+7  Conversations18/18     PASS
+8  Orders       18/18     PASS
+9  Takeover     15/15     PASS
+10 Follow-up    15/15     PASS
+11 Persistence  15/15     PASS
+12 Security     20/20     PASS
+13 PWA/UI       20/20     PASS
+14 E2E          9/19      FAIL
+--------------------------------------
+
+TỔNG: 235/245 case PASS (14.1s) — tối thiểu đề bài: >=220 (14 khu vực)
+
+---- CASE FAIL ----
+  [E2E] E2E-A2: chain: comment -> hỏi mua -> chọn variant -> đủ thông tin -> DRAFT
+        -> state=AFTER_SALES
+  [E2E] E2E-A3: chain: DRAFT -> confirm API -> CONFIRMED + shipment tracking
+        -> Cannot read properties of null (reading 'order_id')
+  [E2E] E2E-A4: chain: carrier DELIVERED -> order DELIVERED -> dashboard doanh thu tăng
+        -> Cannot read properties of undefined (reading 'order_id')
+  [E2E] E2E-B1: chain: complaint -> claim -> agent send -> closeClaim -> handback -> bot AUTO
+        -> The expression evaluated to a falsy value: |  |   assert.ok(conv.claim && conv.mode === 'HUMAN')
+  [E2E] E2E-C1: chain: cancel đơn CONFIRMED (chưa giao) -> carrier -> CANCELLED + restock
+        -> draft u-cx
+  [E2E] E2E-C2: chain: refuse -> CANCEL_PENDING -> retry (ok) -> CANCELLED (qua API)
+        -> draft u-cy
+  [E2E] E2E-D1: chain: DELIVERED -> notification order/needs_human xuất hiện khi có sự cố
+        -> draft u-dx slots={"name":{"value":"Khach udx","state":"detected"},"phone":{"value":"0931001916","state":"confirmed"},"address":{"value":"u-dx Street Q
+  [E2E] E2E-E1: chain: automation settings -> follow-up reschedule (hours áp đúng)
+        -> draft u-ex slots={"name":{"value":"Khach uex","state":"detected"},"phone":{"value":"0931001916","state":"confirmed"},"address":{"value":"u-ex Street Q
+  [E2E] E2E-E3: chain: follow-up chạy tiếp sau restart (khách nhắn lại mở cửa sổ -> SENT)
+        -> follow-up u-ex còn SCHEDULED sau restart
+  [E2E] E2E-G3: chain: quota zalo -> follow-up không gửi lậu (tổng hợp gate)
+        -> draft u-zx
+
+==> CHƯA ĐẠT (cần >=220 PASS).
+EXIT_CODE=1
+EXIT_CODE=1

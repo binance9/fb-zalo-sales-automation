@@ -1,0 +1,29 @@
+{
+  "scenario": "timeout",
+  "timestamps": {
+    "zero": {
+      "t": 187,
+      "iso": "2026-10-06T11:44:17.287Z"
+    },
+    "recv_post": {
+      "t": 195,
+      "iso": "2026-10-06T11:44:17.295Z",
+      "latency_ms": 7,
+      "status": 200
+    },
+    "first_reply": {
+      "t": 3354,
+      "iso": "2026-10-06T11:44:20.454Z",
+      "waited_ms": 3159
+    }
+  },
+  "result": {
+    "out_texts": [
+      "Dạ Nến thơm vanilla bên em có giá như sau nha anh/chị:\n- size S màu trắng: 165000đ\n- size M màu đỏ: 185000đ\n- size M màu xanh: 185000đ"
+    ],
+    "first_reply_ms": 3159,
+    "fallback_reason": [
+      "AUTO_EXECUTED"
+    ]
+  }
+}

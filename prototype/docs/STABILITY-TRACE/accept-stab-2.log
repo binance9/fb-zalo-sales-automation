@@ -1,0 +1,19 @@
+===== SURI STABILITY CASES (S1-S6 + G + CFG) — offline =====
+  [PASS] S1 — AI chậm 5s + takeover giữa chờ -> reply muộn REJECT (takeover), khách không nhận 2 tin (5030ms)
+  [PASS] S2 — AI chậm + bot OFF giữa chờ -> reply muộn REJECT (bot_off) (2031ms)
+  [PASS] S3 — AI chậm + khách đổi ý giữa chờ -> câu tư vấn cũ không được gửi (stale_user_change) (2058ms)
+  [PASS] S4 — 5 hội thoại đồng thời -> đúng reply của mình, không cross-talk, không mất tin (741ms)
+  [PASS] S5 — crash giữa xử lý và gửi -> không gửi trùng, không tạo đơn trùng (54ms)
+  [PASS] S6 — follow-up persist qua restart -> chạy đúng hạn, đúng 1 lần (120ms)
+  [PASS] G1 — bill "Tổng tiền 92500" (bare) -> OVERRIDDEN (49ms)
+  [PASS] G2 — bill "còn 92.5k" -> OVERRIDDEN (45ms)
+  [PASS] G3 — CHITCHAT "giá 92500" -> OVERRIDDEN (47ms)
+  [PASS] G4 — FP-control: bill đúng (units + tổng bare khớp whitelist) -> AUTO_EXECUTED (34ms)
+  [PASS] G5 — FP-control: qty + mã đơn ORD5_86033D -> AUTO_EXECUTED (28ms)
+  [PASS] G6 — PRICE: đúng giá bare allowed; giá bịa bare/k -> OVERRIDDEN (37ms)
+  [PASS] CFG1 — default timeout LLM 8000ms; shop override được tôn trọng (9ms)
+
+TỔNG: 13/13 PASS (SURI-STABILITY)
+==> STABILITY: TOÀN BỘ PASS.
+EXIT_CODE=0
+runner_exit=0

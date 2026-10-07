@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chào mừng — tạo tài khoản chủ shop</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary-softer); padding: 20px; }
+  .auth-card { width: 420px; background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 32px 30px; }
+  .auth-logo { width: 52px; height: 52px; border-radius: 14px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+  .auth-card h1 { font-size: 19px; text-align: center; margin-bottom: 4px; }
+  .auth-card .sub { text-align: center; color: var(--text-light); font-size: 13px; margin-bottom: 22px; line-height: 1.5; }
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .form-row input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-gray); border-radius: 10px; outline: none; }
+  .form-row input:focus { border-color: var(--primary); }
+  .auth-err { background: var(--red-soft); color: var(--red); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; display: none; }
+  .btn-main { width: 100%; padding: 11px; background: var(--primary); color: #fff; border-radius: 10px; font-weight: 700; font-size: 15px; }
+  .btn-main:hover { background: var(--primary-dark); }
+  .btn-main:disabled { opacity: .55; cursor: wait; }
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </div>
+    <h1>Chào mừng đến Sales AI!</h1>
+    <div class="sub">Lần đầu chạy hệ thống — tạo tài khoản <strong>chủ shop (OWNER)</strong> đầu tiên.<br>Sau đó sẽ có wizard 7 bước đưa shop đi live.</div>
+    <div id="authErr" class="auth-err"></div>
+    <div class="form-row"><label>Tên cửa hàng</label><input id="shopName" placeholder="VD: Shop Nến Scent"></div>
+    <div class="form-row"><label>Email</label><input id="email" type="email" placeholder="ban@shop.vn"></div>
+    <div class="form-row"><label>Mật khẩu (tối thiểu 8 ký tự)</label><input id="password" type="password" placeholder="••••••••"></div>
+    <div class="form-row"><label>Nhập lại mật khẩu</label><input id="password2" type="password" placeholder="••••••••"></div>
+    <button id="btnSetup" class="btn-main">Tạo tài khoản &amp; bắt đầu</button>
+  </div>
+</div>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+function err(msg) { const e = $('#authErr'); e.textContent = msg || ''; e.style.display = msg ? 'block' : 'none'; }
+$('#btnSetup').addEventListener('click', async () => {
+  err('');
+  if ($('#password').value !== $('#password2').value) { err('Hai lần nhập mật khẩu không khớp.'); return; }
+  const b = $('#btnSetup'); b.disabled = true;
+  const res = await fetch('/api/auth/setup', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: $('#email').value.trim(), password: $('#password').value, shop_name: $('#shopName').value.trim() || 'Cửa hàng của tôi' }),
+  });
+  const j = await res.json().catch(() => ({}));
+  b.disabled = false;
+  if (!res.ok) {
+    const map = { SETUP_ALREADY_DONE: 'Đã có tài khoản — hãy đăng nhập.', WEAK_PASSWORD: 'Mật khẩu tối thiểu 8 ký tự.', BAD_EMAIL: 'Email không hợp lệ.' };
+    err(map[j.error] || ('Lỗi: ' + (j.error || res.status)));
+    return;
+  }
+  location.href = '/';
+});
+</script>
+</body>
+</html>

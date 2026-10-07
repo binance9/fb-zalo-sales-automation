@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đăng nhập — Sales AI Console</title>
+<link rel="stylesheet" href="/style.css?v=3">
+<style>
+  .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary-softer); padding: 20px; }
+  .auth-card { width: 380px; background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 32px 30px; }
+  .auth-logo { width: 52px; height: 52px; border-radius: 14px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+  .auth-card h1 { font-size: 19px; text-align: center; margin-bottom: 4px; }
+  .auth-card .sub { text-align: center; color: var(--text-light); font-size: 13px; margin-bottom: 22px; }
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .form-row input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-gray); border-radius: 10px; outline: none; }
+  .form-row input:focus { border-color: var(--primary); }
+  .auth-err { background: var(--red-soft); color: var(--red); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; display: none; }
+  .btn-login { width: 100%; padding: 11px; background: var(--primary); color: #fff; border-radius: 10px; font-weight: 700; font-size: 15px; }
+  .btn-login:hover { background: var(--primary-dark); }
+  .btn-login:disabled { opacity: .55; cursor: wait; }
+  .auth-foot { margin-top: 16px; text-align: center; font-size: 13px; color: var(--text-light); }
+  .auth-foot a { color: var(--primary-dark); cursor: pointer; text-decoration: underline; }
+  .reset-box { display: none; }
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <!-- i18n: chọn ngôn ngữ (lưu chung localStorage 'sai_lang' với app) -->
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <select id="langSwitch" class="lang-select" aria-label="Ngôn ngữ / Language">
+        <option value="vi">VI</option>
+        <option value="en">EN</option>
+        <option value="zh">中文</option>
+        <option value="ko">한국어</option>
+        <option value="hi">हिन्दी</option>
+        <option value="ja">日本語</option>
+      </select>
+    </div>
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </div>
+    <h1>Sales AI Console</h1>
+    <div class="sub" data-i18n="lg.sub">Bán hàng tự động — đăng nhập để vận hành</div>
+
+    <div id="authErr" class="auth-err"></div>
+
+    <!-- Đăng nhập -->
+    <div id="loginBox">
+      <div class="form-row"><label data-i18n="lg.id">ID đăng nhập</label><input id="email" type="text" placeholder="thao2019" autofocus></div>
+      <div class="form-row"><label data-i18n="lg.password">Mật khẩu</label><input id="password" type="password" placeholder="••••••••"></div>
+      <button id="btnLogin" class="btn-login" data-i18n="lg.btn_login">Đăng nhập</button>
+      <div class="auth-foot"><span data-i18n="lg.forgot">Quên mật khẩu?</span> <a id="linkForgot" data-i18n="lg.reset_link">Đặt lại mật khẩu</a></div>
+    </div>
+
+    <!-- Quên mật khẩu (reset token ghi file local — không email thật) -->
+    <div id="resetBox" class="reset-box">
+      <div class="form-row"><label data-i18n="lg.email">Email đăng ký</label><input id="rEmail" type="email" placeholder="ban@shop.vn"></div>
+      <button id="btnForgot" class="btn-login" data-i18n="lg.btn_token">Tạo mã đặt lại</button>
+      <div id="resetTokenOut" style="margin-top:12px;font-size:12.5px;color:var(--text-light);word-break:break-all"></div>
+      <div class="form-row" style="margin-top:12px"><label data-i18n="lg.reset_code">Mã đặt lại</label><input id="rToken" data-i18n-ph="lg.reset_code_ph" placeholder="dán mã vào đây"></div>
+      <div class="form-row"><label data-i18n="lg.new_pass">Mật khẩu mới (tối thiểu 8 ký tự)</label><input id="rPass" type="password"></div>
+      <button id="btnReset" class="btn-login" data-i18n="lg.btn_reset">Đặt lại mật khẩu</button>
+      <div class="auth-foot"><a id="linkBack" data-i18n="lg.back">← Về đăng nhập</a></div>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+// ============================================================
+// i18n (login): mini-dictionary INLINE — trang login được serve TRƯỚC session
+// nên không tải được /i18n.js (server chỉ trả static sau login). Key 'lg.*' chỉ
+// dùng trên trang này; ngôn ngữ lưu chung localStorage 'sai_lang' với app.
+// ============================================================
+(function () {
+  var LG = {
+    vi: {
+      'lg.sub': 'Bán hàng tự động — đăng nhập để vận hành',
+      'lg.id': 'ID đăng nhập', 'lg.password': 'Mật khẩu', 'lg.btn_login': 'Đăng nhập',
+      'lg.forgot': 'Quên mật khẩu?', 'lg.reset_link': 'Đặt lại mật khẩu',
+      'lg.email': 'Email đăng ký', 'lg.btn_token': 'Tạo mã đặt lại',
+      'lg.token_out': 'Mã đặt lại (hiệu lực 30 phút, lưu file local — không gửi email): ',
+      'lg.token_quiet': 'Nếu email tồn tại, mã đặt lại đã được tạo (kiểm tra file data/auth).',
+      'lg.reset_code': 'Mã đặt lại', 'lg.reset_code_ph': 'dán mã vào đây',
+      'lg.new_pass': 'Mật khẩu mới (tối thiểu 8 ký tự)', 'lg.btn_reset': 'Đặt lại mật khẩu',
+      'lg.back': '← Về đăng nhập',
+      'lg.err_rate': 'Đăng nhập quá 5 lần/phút — chờ 1 phút rồi thử lại.',
+      'lg.err_bad': 'ID hoặc mật khẩu không đúng.', 'lg.err_unauth': 'Chưa xác thực.',
+      'lg.err_prefix': 'Lỗi: ', 'lg.err_weak': 'Mật khẩu tối thiểu 8 ký tự.',
+      'lg.err_token': 'Mã đặt lại không hợp lệ hoặc đã hết hạn.',
+      'lg.ok_reset': 'Đã đổi mật khẩu — đăng nhập lại nha.',
+    },
+    en: {
+      'lg.sub': 'Automated sales — log in to operate',
+      'lg.id': 'Login ID', 'lg.password': 'Password', 'lg.btn_login': 'Log in',
+      'lg.forgot': 'Forgot password?', 'lg.reset_link': 'Reset password',
+      'lg.email': 'Registered email', 'lg.btn_token': 'Create reset code',
+      'lg.token_out': 'Reset code (valid 30 minutes, stored in a local file — no email is sent): ',
+      'lg.token_quiet': 'If the email exists, a reset code has been created (check the data/auth folder).',
+      'lg.reset_code': 'Reset code', 'lg.reset_code_ph': 'paste the code here',
+      'lg.new_pass': 'New password (min 8 characters)', 'lg.btn_reset': 'Reset password',
+      'lg.back': '← Back to login',
+      'lg.err_rate': 'Too many logins (5/minute) — wait 1 minute and try again.',
+      'lg.err_bad': 'Wrong ID or password.', 'lg.err_unauth': 'Not authenticated.',
+      'lg.err_prefix': 'Error: ', 'lg.err_weak': 'Password must be at least 8 characters.',
+      'lg.err_token': 'Reset code is invalid or expired.',
+      'lg.ok_reset': 'Password changed — please log in again.',
+    },
+    zh: {
+      'lg.sub': '销售自动化 — 登录后开始运营',
+      'lg.id': '登录 ID', 'lg.password': '密码', 'lg.btn_login': '登录',
+      'lg.forgot': '忘记密码?', 'lg.reset_link': '重置密码',
+      'lg.email': '注册邮箱', 'lg.btn_token': '生成重置码',
+      'lg.token_out': '重置码(30 分钟内有效,保存在本地文件 — 不发送邮件):',
+      'lg.token_quiet': '若邮箱存在,重置码已生成(查看 data/auth 文件夹)。',
+      'lg.reset_code': '重置码', 'lg.reset_code_ph': '粘贴重置码',
+      'lg.new_pass': '新密码(至少 8 位)', 'lg.btn_reset': '重置密码',
+      'lg.back': '← 返回登录',
+      'lg.err_rate': '登录过于频繁(每分钟 5 次)— 请等 1 分钟再试。',
+      'lg.err_bad': '登录 ID 或密码不正确。', 'lg.err_unauth': '未通过身份验证。',
+      'lg.err_prefix': '错误:', 'lg.err_weak': '密码至少 8 位。',
+      'lg.err_token': '重置码无效或已过期。',
+      'lg.ok_reset': '密码已修改 — 请重新登录。',
+    },
+    ko: {
+      'lg.sub': '판매 자동화 — 로그인 후 운영하세요',
+      'lg.id': '로그인 ID', 'lg.password': '비밀번호', 'lg.btn_login': '로그인',
+      'lg.forgot': '비밀번호를 잊으셨나요?', 'lg.reset_link': '비밀번호 재설정',
+      'lg.email': '가입한 이메일', 'lg.btn_token': '재설정 코드 생성',
+      'lg.token_out': '재설정 코드(30분간 유효, 로컬 파일에 저장 — 이메일 발송 안 함): ',
+      'lg.token_quiet': '이메일이 존재하면 재설정 코드가 생성됐어요(data/auth 폴더 확인).',
+      'lg.reset_code': '재설정 코드', 'lg.reset_code_ph': '코드를 붙여넣으세요',
+      'lg.new_pass': '새 비밀번호(8자 이상)', 'lg.btn_reset': '비밀번호 재설정',
+      'lg.back': '← 로그인으로 돌아가기',
+      'lg.err_rate': '로그인이 너무 잦아요(분당 5회) — 1분 후 다시 시도해 주세요.',
+      'lg.err_bad': 'ID 또는 비밀번호가 올바르지 않아요.', 'lg.err_unauth': '인증되지 않았어요.',
+      'lg.err_prefix': '오류: ', 'lg.err_weak': '비밀번호는 8자 이상이어야 해요.',
+      'lg.err_token': '재설정 코드가 잘못됐거나 만료됐어요.',
+      'lg.ok_reset': '비밀번호가 변경됐어요 — 다시 로그인해 주세요.',
+    },
+    hi: {
+      'lg.sub': 'स्वचालित बिक्री — संचालन के लिए लॉग इन करें',
+      'lg.id': 'लॉगिन आईडी', 'lg.password': 'पासवर्ड', 'lg.btn_login': 'लॉग इन',
+      'lg.forgot': 'पासवर्ड भूल गए?', 'lg.reset_link': 'पासवर्ड रीसेट करें',
+      'lg.email': 'पंजीकृत ईमेल', 'lg.btn_token': 'रीसेट कोड बनाएँ',
+      'lg.token_out': 'रीसेट कोड (30 मिनट वैध, लोकल फ़ाइल में सहेजा जाता है — ईमेल नहीं भेजा जाता): ',
+      'lg.token_quiet': 'यदि ईमेल मौजूद है, तो रीसेट कोड बन गया है (data/auth फ़ोल्डर देखें)।',
+      'lg.reset_code': 'रीसेट कोड', 'lg.reset_code_ph': 'कोड यहाँ पेस्ट करें',
+      'lg.new_pass': 'नया पासवर्ड (कम से कम 8 अक्षर)', 'lg.btn_reset': 'पासवर्ड रीसेट करें',
+      'lg.back': '← लॉगिन पर वापस',
+      'lg.err_rate': 'बहुत ज़्यादा लॉगिन प्रयास (5/मिनट) — 1 मिनट रुककर फिर कोशिश करें।',
+      'lg.err_bad': 'आईडी या पासवर्ड गलत है।', 'lg.err_unauth': 'प्रमाणीकरण नहीं हुआ।',
+      'lg.err_prefix': 'त्रुटि: ', 'lg.err_weak': 'पासवर्ड कम से कम 8 अक्षर का होना चाहिए।',
+      'lg.err_token': 'रीसेट कोड अमान्य या समाप्त हो गया।',
+      'lg.ok_reset': 'पासवर्ड बदल गया — कृपया दोबारा लॉग इन करें।',
+    },
+    ja: {
+      'lg.sub': '販売自動化 — ログインして運営',
+      'lg.id': 'ログインID', 'lg.password': 'パスワード', 'lg.btn_login': 'ログイン',
+      'lg.forgot': 'パスワードをお忘れですか?', 'lg.reset_link': 'パスワードをリセット',
+      'lg.email': '登録メールアドレス', 'lg.btn_token': 'リセットコードを発行',
+      'lg.token_out': 'リセットコード(30分間有効、ローカルファイルに保存 — メール送信なし): ',
+      'lg.token_quiet': 'メールアドレスが存在すればリセットコードを発行済みです(data/auth フォルダを確認)。',
+      'lg.reset_code': 'リセットコード', 'lg.reset_code_ph': 'コードを貼り付け',
+      'lg.new_pass': '新しいパスワード(8文字以上)', 'lg.btn_reset': 'パスワードをリセット',
+      'lg.back': '← ログインに戻る',
+      'lg.err_rate': 'ログインが多すぎます(毎分5回)— 1分待ってから再試行してください。',
+      'lg.err_bad': 'IDまたはパスワードが違います。', 'lg.err_unauth': '未認証です。',
+      'lg.err_prefix': 'エラー: ', 'lg.err_weak': 'パスワードは8文字以上にしてください。',
+      'lg.err_token': 'リセットコードが無効か期限切れです。',
+      'lg.ok_reset': 'パスワードを変更しました — もう一度ログインしてください。',
+    },
+  };
+  function cur() {
+    var l = null;
+    try { l = localStorage.getItem('sai_lang'); } catch (e) { /* private mode */ }
+    return (l && LG[l]) ? l : 'vi';
+  }
+  window.t = function (k) {
+    var pack = LG[cur()];
+    return (pack && pack[k] !== undefined) ? pack[k] : (LG.vi[k] !== undefined ? LG.vi[k] : k);
+  };
+  function apply() {
+    document.documentElement.lang = cur();
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      el.textContent = window.t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+      el.setAttribute('placeholder', window.t(el.getAttribute('data-i18n-ph')));
+    });
+    var sel = document.getElementById('langSwitch');
+    if (sel) sel.value = cur();
+  }
+  document.addEventListener('DOMContentLoaded', apply);
+  if (document.readyState !== 'loading') apply();
+  var sel0 = document.getElementById('langSwitch');
+  if (sel0) sel0.addEventListener('change', function () {
+    try { localStorage.setItem('sai_lang', sel0.value); } catch (e) { /* bỏ qua */ }
+    apply();
+  });
+})();
+const t = k => window.t(k);
+const $ = s => document.querySelector(s);
+function err(msg) { const e = $('#authErr'); e.textContent = msg || ''; e.style.display = msg ? 'block' : 'none'; }
+async function post(url, body) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await res.json().catch(() => ({}));
+  return { ok: res.ok, j };
+}
+$('#btnLogin').addEventListener('click', async () => {
+  err('');
+  const b = $('#btnLogin'); b.disabled = true;
+  const r = await post('/api/auth/login', { email: $('#email').value.trim(), password: $('#password').value });
+  b.disabled = false;
+  if (!r.ok) {
+    const map = { RATE_LIMITED: t('lg.err_rate'), BAD_CREDENTIALS: t('lg.err_bad'), UNAUTHORIZED: t('lg.err_unauth') };
+    err(map[r.j.error] || (t('lg.err_prefix') + (r.j.error || r.ok)));
+    return;
+  }
+  location.href = '/';
+});
+$('#password').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnLogin').click(); });
+$('#linkForgot').addEventListener('click', () => { $('#loginBox').style.display = 'none'; $('#resetBox').style.display = 'block'; err(''); });
+$('#linkBack').addEventListener('click', () => { $('#loginBox').style.display = 'block'; $('#resetBox').style.display = 'none'; err(''); });
+$('#btnForgot').addEventListener('click', async () => {
+  err('');
+  const r = await post('/api/auth/forgot', { email: $('#rEmail').value.trim() });
+  if (r.ok && r.j.reset_token) $('#resetTokenOut').textContent = t('lg.token_out') + r.j.reset_token;
+  else $('#resetTokenOut').textContent = r.j.sent === false ? t('lg.token_quiet') : '';
+});
+$('#btnReset').addEventListener('click', async () => {
+  err('');
+  const r = await post('/api/auth/reset', { token: $('#rToken').value.trim(), new_password: $('#rPass').value });
+  if (!r.ok) { err(r.j.error === 'WEAK_PASSWORD' ? t('lg.err_weak') : t('lg.err_token')); return; }
+  $('#loginBox').style.display = 'block'; $('#resetBox').style.display = 'none';
+  $('#resetTokenOut').textContent = '';
+  err(t('lg.ok_reset'));
+});
+</script>
+</body>
+</html>

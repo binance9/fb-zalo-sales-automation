@@ -1,0 +1,69 @@
+===== LOOP-RUN-5 12:20:38 =====
+===== TEST MATRIX — 14 KHU VỰC (runtime thật qua API/App, offline) =====
+
+[05:20:39] AREA Auth — setup...
+[05:20:39] AREA Auth — 16/16 (0.8s)
+
+[05:20:39] AREA Onboarding — setup...
+[05:20:40] AREA Onboarding — 20/20 (0.3s)
+
+[05:20:40] AREA Facebook — setup...
+[05:20:40] AREA Facebook — 18/18 (0.1s)
+
+[05:20:40] AREA Zalo — setup...
+[05:20:40] AREA Zalo — 18/18 (0.1s)
+
+[05:20:40] AREA Shipping — setup...
+[05:20:40] AREA Shipping — 18/18 (0.3s)
+
+[05:20:40] AREA Products — setup...
+[05:20:40] AREA Products — 15/15 (0.2s)
+
+[05:20:40] AREA Conversations — setup...
+[05:20:41] AREA Conversations — 18/18 (0.2s)
+
+[05:20:41] AREA Orders — setup...
+[05:20:41] AREA Orders — 18/18 (0.7s)
+
+[05:20:41] AREA Takeover — setup...
+[05:20:41] AREA Takeover — 15/15 (0.2s)
+
+[05:20:41] AREA Follow-up — setup...
+[05:20:50] AREA Follow-up — 15/15 (8.1s)
+
+[05:20:50] AREA Persistence — setup...
+[05:20:50] AREA Persistence — 15/15 (0.1s)
+
+[05:20:50] AREA Security — setup...
+[05:20:51] AREA Security — 20/20 (1s)
+
+[05:20:51] AREA PWA/UI — setup...
+[05:20:51] AREA PWA/UI — 20/20 (0.1s)
+
+[05:20:51] AREA E2E — setup...
+[05:20:55] AREA E2E — 19/19 (4s)
+
+================ BẢNG KẾT QUẢ THEO KHU VỰC ================
+#         KHU VỰC         KẾT QUẢ     
+--------------------------------------
+1  Auth         16/16     PASS
+2  Onboarding   20/20     PASS
+3  Facebook     18/18     PASS
+4  Zalo         18/18     PASS
+5  Shipping     18/18     PASS
+6  Products     15/15     PASS
+7  Conversations18/18     PASS
+8  Orders       18/18     PASS
+9  Takeover     15/15     PASS
+10 Follow-up    15/15     PASS
+11 Persistence  15/15     PASS
+12 Security     20/20     PASS
+13 PWA/UI       20/20     PASS
+14 E2E          19/19     PASS
+--------------------------------------
+
+TỔNG: 245/245 case PASS (16.3s) — tối thiểu đề bài: >=220 (14 khu vực)
+
+==> MATRIX DAT: 245 case thật (>=220), toàn bộ PASS.
+EXIT_CODE=0
+EXIT_CODE=0

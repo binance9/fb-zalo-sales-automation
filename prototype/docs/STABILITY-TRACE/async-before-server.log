@@ -1,0 +1,24 @@
+PROTO_PORT=49480
+[boot-async] tag=before mode=persist root=C:\Users\BAOAN\.zcode\workspace\default\sales-ai-lab\prototype\data\test-runs\async-before bound=:::49480
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479
+[stats][asyncgate] ai={"llm_calls":1,"llm_ok":1,"llm_fallback":0,"last_fallback_reason":null} engine=llm:deepseek base_url=http://127.0.0.1:49479

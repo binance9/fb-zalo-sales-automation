@@ -1,0 +1,9 @@
+MOCK_PORT=55849
+[slow-ai-mock] listening 127.0.0.1:55849 delay=6000ms
+[slow-ai-mock] {"t":"2026-10-06T11:44:17.324Z","kind":"chat","delay":6000,"model":"deepseek-chat"}
+[slow-ai-mock] {"t":"2026-10-06T11:44:20.615Z","kind":"chat","delay":6000,"model":"deepseek-chat"}
+[slow-ai-mock] {"t":"2026-10-06T11:44:20.615Z","kind":"chat","delay":6000,"model":"deepseek-chat"}
+[slow-ai-mock] {"t":"2026-10-06T11:44:20.621Z","kind":"chat","delay":6000,"model":"deepseek-chat"}
+[slow-ai-mock] {"t":"2026-10-06T11:44:20.628Z","kind":"chat","delay":6000,"model":"deepseek-chat"}
+[slow-ai-mock] {"t":"2026-10-06T11:44:20.632Z","kind":"chat","delay":6000,"model":"deepseek-chat"}
+[slow-ai-mock] {"t":"2026-10-06T11:44:26.888Z","kind":"chat","delay":6000,"model":"deepseek-chat"}

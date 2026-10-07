@@ -1,0 +1,12 @@
+=== CHỐT LOCAL — SỐ LIỆU CHUẨN TỪ LOG GỐC — 2026-10-05 20:40:08 ===
+matrix/index => TỔNG: 245/245 case PASS (16.4s) — tối thiểu đề bài: >=220 (14 khu vực) | case cộng vào: 245/245
+e2e-flows => TỔNG: 5/5 flows PASS | case cộng vào: 5/5
+product-ready => TỔNG: 32/32 PASS, 0 FAIL | case cộng vào: 32/32
+live-adapters => TỔNG: 26/26 PASS, 0 FAIL | case cộng vào: 26/26
+p3c-cases => TỔNG: 28/28 PASS, 0 FAIL | case cộng vào: 28/28
+p3b-cases => TỔNG: 11/11 PASS, 0 FAIL | case cộng vào: 11/11
+gate-a => TỔNG: 7/7 PASS, 0 FAIL | case cộng vào: 7/7
+invariants-check => TỔNG: 6/6 vùng PASS, 0 FAIL | case cộng vào: 6/6
+18-cases => TỔNG: 18/18 PASS, 0 FAIL | case cộng vào: 18/18
+===========================================
+TỔNG CỘNG CASE DUY NHẤT (1 lượt chạy/suite): 378

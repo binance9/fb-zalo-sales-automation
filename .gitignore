@@ -1,0 +1,20 @@
+# --- Secrets & local data (KHÔNG BAO GIỜ public) ---
+.env
+.env.live
+.env.local
+prototype/.env.live
+prototype/data/
+data/
+*.session
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+
+# --- OS / editor ---
+Thumbs.db
+.DS_Store
+*.tmp
+*.bak
+.zcode/
+BAO-CAO-HOI-DONG*.md

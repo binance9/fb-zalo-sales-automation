@@ -1,0 +1,22 @@
+{
+  "taken_at": "2026-10-06T10:31:59.932Z",
+  "note": "baseline TRƯỚC khi đóng 5 finding SURI (F1 facts-stale, F2 routeRepurchase promise, F5 ai_base_url). LOCKED files phải giữ nguyên hash sau vá.",
+  "hashes": {
+    "src/action-gate.js": "e31096fba777c48d8b7cda516ef5cbf3a2e0cbbe5af554ab579209fcfe364529",
+    "src/order-engine.js": "1e3d24d4093e269b070ed1e55fef7da934459406965033641d3e4eeee4e654e0",
+    "src/session.js": "bbd68cebbf5fb833598733acce4c20ab263a60bfa6bbb25308112cdb029ca27c",
+    "src/gateway.js": "fa6b9e157e701e6ffd8833e0c43c6a92b5584ab782b0649c575f5d49fde0392d",
+    "src/pipeline.js": "0259c20a634c5948f3cdff169682b11e00e08e95b1644c276d8d27597aeb807d",
+    "src/sales-ai.js": "5d07136219dbf3d321ef3f55651f9ba658a9bd099de2dc1b2bbbbd81299c838d",
+    "src/live-http.js": "65a26bcdfe2fa33eb29b3b649d112e1f5e7eb2c9efe82dc6904c086295ac94d6",
+    "src/ai-provider.js": "f5a28b62a3dd50c353a091005823b132fff11cf1f218489cf5eb252925852419",
+    "src/app.js": "7e87f520bff9b1d753adec9b3ca95d59ca1ec156c01d1de27c0f0d48ef5bb7a8",
+    "src/agent/orchestrator.js": "40725e6593a4523112f904a6745d96e46af0da3f0e90a75163b42d360676f135",
+    "src/agent/tools.js": "66b8b1403bf93896fc2e4b8c0344140a8a25994af1f04d8a13340dbe5d8e5b67",
+    "src/prompt-builder.js": "fece4ebe91a8b251c8b90c8086503abd7b54b898d00cdc5f85dcf7556a18e282",
+    "src/deepseek-wire.js": "6f8be10669da8eb1ac0a022e5df12e183b853ea5c6d9987b2e7069d31e386458",
+    "src/util.js": "8a68dba69f689120b2ba0d38799b7df08d6e7b451516b6aa332f4e6b616f399c",
+    "server.js": "27e93002174ade029d4e5cc7d45b661168f367d721a5bb3fd330641d63bd76d2",
+    "ui/app.js": "687a6071948b0b2a8f4ba66c69619f57f6e56fc1a984e7f9060e369deca2b579"
+  }
+}

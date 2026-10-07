@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đang dọn cache — Sales AI Console</title>
+<style>
+  body { font-family: system-ui, 'Segoe UI', sans-serif; background:#fdf2f8; color:#374151;
+         display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+  .box { background:#fff; border:1px solid #fbcfe8; border-radius:16px; padding:32px 36px;
+         box-shadow:0 8px 30px rgba(219,39,119,.12); text-align:center; max-width:420px; }
+  h1 { font-size:18px; margin:0 0 10px; color:#db2777; }
+  p { font-size:14px; line-height:1.6; margin:6px 0; }
+  code { background:#fce7f3; border-radius:6px; padding:2px 8px; font-size:13px; }
+  .log { text-align:left; font-size:13px; color:#6b7280; margin-top:12px; min-height:60px; }
+  .ok { color:#059669; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>🧹 Đang dọn cache trình duyệt…</h1>
+  <p>Xóa sạch <b>Service Worker</b> + <b>Cache Storage</b> của Sales AI Console,<br>rồi tự quay về trang đăng nhập.</p>
+  <div class="log" id="log">Bắt đầu…</div>
+</div>
+<script>
+(async () => {
+  const log = (m) => { const el = document.getElementById('log');
+    el.innerHTML += '<div>• ' + m + '</div>'; };
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const r of regs) await r.unregister();
+    log('Đã gỡ ' + regs.length + ' Service Worker.');
+    const keys = await caches.keys();
+    for (const k of keys) await caches.delete(k);
+    log('Đã xóa ' + keys.length + ' cache: <code>' + (keys.join(', ') || 'trống') + '</code>');
+    log('<span class="ok">Xong — đang quay về trang đăng nhập…</span>');
+  } catch (e) {
+    log('Lỗi: ' + e.message + ' — vẫn chuyển về trang đăng nhập.');
+  }
+  setTimeout(() => { location.replace('/'); }, 1200);
+})();
+</script>
+</body>
+</html>

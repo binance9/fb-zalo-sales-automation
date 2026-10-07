@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sales AI Console — Vận hành bán hàng</title>
+<link rel="stylesheet" href="/style.css?v=3">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#db2777">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SalesAI">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
+<script>
+  // PWA (đợt 2): đăng ký service worker — cache-first static, KHÔNG cache /api.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () { /* prototype: bỏ qua lỗi SW */ });
+    });
+  }
+</script>
+</head>
+<body>
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      </span>
+      <div class="brand-text">
+        <strong>Sales AI Console</strong>
+        <small data-i18n="top.brand_sub">Bán hàng tự động — prototype</small>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <!-- i18n: chọn ngôn ngữ giao diện (VI mặc định) -->
+      <select id="langSwitch" class="lang-select" aria-label="Ngôn ngữ / Language" title="Ngôn ngữ / Language">
+        <option value="vi">VI</option>
+        <option value="en">EN</option>
+        <option value="zh">中文</option>
+        <option value="ko">한국어</option>
+        <option value="hi">हिन्दी</option>
+        <option value="ja">日本語</option>
+      </select>
+      <button id="botToggle" class="btn-bot" data-i18n-title="top.bot_tip" title="Bật/tắt bot trả lời tự động">
+        <span class="dot"></span><span id="botToggleText">BOT: ĐANG BẬT</span>
+      </button>
+      <button id="bellBtn" class="bell" title="Thông báo: cần nhân viên / đơn lỗi / DLQ / token / quota">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="bellCount" class="bell-badge hidden">0</span>
+      </button>
+      <div id="notifPanel" class="notif-panel hidden" aria-label="Danh sách thông báo">
+        <div class="notif-head">
+          <strong data-i18n="top.notif">Thông báo</strong>
+          <button id="notifReadAll" class="btn" style="height:26px;padding:2px 10px;font-size:12.5px" data-i18n="top.notif_read_all">Đọc tất cả</button>
+        </div>
+        <div id="notifList" class="notif-list"><div class="notif-empty">Đang tải…</div></div>
+      </div>
+      <div class="admin" id="userBadge" title="Tài khoản đang đăng nhập">
+        <span class="avatar" id="userAvatar">QT</span>
+        <!-- userName: renderTopbar ghi email động (KHÔNG gắn data-i18n để tránh đè khi đổi ngôn ngữ) -->
+        <span class="admin-name" id="userName">Quản trị</span>
+      </div>
+      <button id="btnLogout" class="btn" style="height:34px" title="Đăng xuất" data-i18n="top.logout">Thoát</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <!-- ============ SIDEBAR ============ -->
+    <nav class="sidebar" id="sidebar">
+      <button class="nav-item active" data-view="overview">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        <span data-i18n="nav.overview">Tổng quan</span>
+      </button>
+      <button class="nav-item" data-view="reports">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span data-i18n="nav.reports">Báo cáo</span>
+      </button>
+      <button class="nav-item" data-view="conversations">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span data-i18n="nav.conversations">Hội thoại</span>
+        <em id="navConvBadge" class="nav-badge hidden"></em>
+      </button>
+      <button class="nav-item" data-view="orders">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span data-i18n="nav.orders">Đơn hàng</span>
+      </button>
+      <button class="nav-item" data-view="products">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <span data-i18n="nav.products">Sản phẩm</span>
+      </button>
+      <button class="nav-item" data-view="customers">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span data-i18n="nav.customers">Khách hàng</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="nav.settings">Cài đặt</span>
+      </button>
+      <button class="nav-item" data-view="guide">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="13" y2="11"/></svg>
+        <span data-i18n="nav.guide">Hướng dẫn</span>
+      </button>
+    </nav>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main" id="main">
+      <div class="loading" data-i18n="top.loading">Đang tải dữ liệu từ hệ thống…</div>
+    </main>
+  </div>
+
+  <!-- drawer phủ phải (chi tiết đơn / khách) -->
+  <div id="drawerOverlay" class="drawer-overlay hidden"></div>
+  <aside id="drawer" class="drawer hidden"></aside>
+
+  <!-- modal thêm/sửa sản phẩm -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal" id="modalBox"></div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ============ GUIDE: nút nổi "Hỏi AI" + panel chat (hiện ở mọi view) ============ -->
+  <button id="gdAskFab" class="gd-fab" data-i18n="gd.fab" title="Hỏi AI — trợ lý hướng dẫn sử dụng">🤖 Hỏi AI</button>
+  <div id="gdChatPanel" class="gd-chat hidden" aria-label="Chat với AI hướng dẫn">
+    <div class="gd-chat-head">
+      <span class="gd-chat-title" data-i18n="gd.chat_title">🤖 Hỏi AI — Hướng dẫn sử dụng</span>
+      <button id="gdChatClose" class="gd-chat-close" data-i18n-title="gd.close" title="Đóng">✕</button>
+    </div>
+    <div id="gdChatMsgs" class="gd-chat-msgs">
+      <div class="gd-chat-note" data-i18n="gd.chat_note">Hỏi thẳng bằng tiếng Việt — AI hướng dẫn từng bước, mở đúng menu và chỉ vào đúng chỗ cần bấm cho bạn.</div>
+    </div>
+    <div class="gd-chat-composer">
+      <input id="gdChatInput" type="text" data-i18n-ph="gd.chat_ph" placeholder="Nhập câu hỏi của bạn… (VD: Cách tạo đơn hàng?)">
+      <button id="gdChatSend" class="gd-chat-send" data-i18n="gd.chat_send">Gửi</button>
+    </div>
+  </div>
+
+  <script src="/i18n.js?v=3"></script>
+  <script src="/app.js?v=3"></script>
+</body>
+</html>
