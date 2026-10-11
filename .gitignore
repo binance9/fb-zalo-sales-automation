@@ -18,3 +18,5 @@ Thumbs.db
 *.bak
 .zcode/
 BAO-CAO-HOI-DONG*.md
+
+prototype/*.log
