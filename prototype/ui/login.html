@@ -52,6 +52,7 @@
       <div class="form-row"><label data-i18n="lg.password">Mật khẩu</label><input id="password" type="password" placeholder="••••••••"></div>
       <button id="btnLogin" class="btn-login" data-i18n="lg.btn_login">Đăng nhập</button>
       <div class="auth-foot"><span data-i18n="lg.forgot">Quên mật khẩu?</span> <a id="linkForgot" data-i18n="lg.reset_link">Đặt lại mật khẩu</a></div>
+      <div class="auth-foot" style="margin-top:6px"><span data-i18n="lg.no_acc">Chưa có tài khoản?</span> <a id="linkRegister" data-i18n="lg.reg_link">Đăng ký ngay</a></div>
     </div>
 
     <!-- Quên mật khẩu (reset token ghi file local — không email thật) -->
@@ -63,6 +64,16 @@
       <div class="form-row"><label data-i18n="lg.new_pass">Mật khẩu mới (tối thiểu 8 ký tự)</label><input id="rPass" type="password"></div>
       <button id="btnReset" class="btn-login" data-i18n="lg.btn_reset">Đặt lại mật khẩu</button>
       <div class="auth-foot"><a id="linkBack" data-i18n="lg.back">← Về đăng nhập</a></div>
+    </div>
+
+    <!-- Đăng ký tài khoản mới — mỗi tài khoản 1 cửa hàng riêng -->
+    <div id="regBox" class="reset-box">
+      <div class="form-row"><label data-i18n="lg.reg_shop">Tên cửa hàng</label><input id="gShop" type="text" data-i18n-ph="lg.reg_shop_ph" placeholder="vd: Nến Scent"></div>
+      <div class="form-row"><label data-i18n="lg.reg_id">ID đăng nhập (email)</label><input id="gEmail" type="email" placeholder="ban@shop.vn"></div>
+      <div class="form-row"><label data-i18n="lg.reg_pass">Mật khẩu (tối thiểu 8 ký tự)</label><input id="gPass" type="password" placeholder="••••••••"></div>
+      <div class="form-row"><label data-i18n="lg.reg_pass2">Nhập lại mật khẩu</label><input id="gPass2" type="password" placeholder="••••••••"></div>
+      <button id="btnRegister" class="btn-login" data-i18n="lg.reg_btn">Tạo tài khoản</button>
+      <div class="auth-foot"><a id="linkRegBack" data-i18n="lg.back">← Về đăng nhập</a></div>
     </div>
   </div>
 </div>
@@ -90,6 +101,13 @@
       'lg.err_prefix': 'Lỗi: ', 'lg.err_weak': 'Mật khẩu tối thiểu 8 ký tự.',
       'lg.err_token': 'Mã đặt lại không hợp lệ hoặc đã hết hạn.',
       'lg.ok_reset': 'Đã đổi mật khẩu — đăng nhập lại nha.',
+      'lg.no_acc': 'Chưa có tài khoản?', 'lg.reg_link': 'Đăng ký ngay',
+      'lg.reg_shop': 'Tên cửa hàng', 'lg.reg_shop_ph': 'vd: Nến Scent',
+      'lg.reg_id': 'ID đăng nhập (email)', 'lg.reg_pass': 'Mật khẩu (tối thiểu 8 ký tự)',
+      'lg.reg_pass2': 'Nhập lại mật khẩu', 'lg.reg_btn': 'Tạo tài khoản',
+      'lg.err_bademail': 'ID đăng nhập phải là email (vd: ban@shop.vn).',
+      'lg.err_exists': 'Email này đã có người dùng — đăng nhập hoặc đổi email nha.',
+      'lg.err_nomatch': 'Hai lần nhập mật khẩu không khớp.',,
     },
     en: {
       'lg.sub': 'Automated sales — log in to operate',
@@ -106,6 +124,13 @@
       'lg.err_prefix': 'Error: ', 'lg.err_weak': 'Password must be at least 8 characters.',
       'lg.err_token': 'Reset code is invalid or expired.',
       'lg.ok_reset': 'Password changed — please log in again.',
+      'lg.no_acc': 'No account yet?', 'lg.reg_link': 'Sign up',
+      'lg.reg_shop': 'Shop name', 'lg.reg_shop_ph': 'e.g. Scent Shop',
+      'lg.reg_id': 'Login ID (email)', 'lg.reg_pass': 'Password (min 8 characters)',
+      'lg.reg_pass2': 'Confirm password', 'lg.reg_btn': 'Create account',
+      'lg.err_bademail': 'Login ID must be an email (e.g. shop@mail.com).',
+      'lg.err_exists': 'This email is already registered — log in or use another email.',
+      'lg.err_nomatch': 'Passwords do not match.',,
     },
     zh: {
       'lg.sub': '销售自动化 — 登录后开始运营',
@@ -122,6 +147,13 @@
       'lg.err_prefix': '错误:', 'lg.err_weak': '密码至少 8 位。',
       'lg.err_token': '重置码无效或已过期。',
       'lg.ok_reset': '密码已修改 — 请重新登录。',
+      'lg.no_acc': '还没有账号?', 'lg.reg_link': '立即注册',
+      'lg.reg_shop': '店铺名称', 'lg.reg_shop_ph': '例如:香薰店',
+      'lg.reg_id': '登录 ID(邮箱)', 'lg.reg_pass': '密码(至少 8 位)',
+      'lg.reg_pass2': '确认密码', 'lg.reg_btn': '创建账号',
+      'lg.err_bademail': '登录 ID 必须是邮箱(例如 shop@mail.com)。',
+      'lg.err_exists': '该邮箱已注册 — 请登录或换一个邮箱。',
+      'lg.err_nomatch': '两次输入的密码不一致。',,
     },
     ko: {
       'lg.sub': '판매 자동화 — 로그인 후 운영하세요',
@@ -138,6 +170,13 @@
       'lg.err_prefix': '오류: ', 'lg.err_weak': '비밀번호는 8자 이상이어야 해요.',
       'lg.err_token': '재설정 코드가 잘못됐거나 만료됐어요.',
       'lg.ok_reset': '비밀번호가 변경됐어요 — 다시 로그인해 주세요.',
+      'lg.no_acc': '계정이 없으신가요?', 'lg.reg_link': '회원가입',
+      'lg.reg_shop': '매장 이름', 'lg.reg_shop_ph': '예: 향 매장',
+      'lg.reg_id': '로그인 ID(이메일)', 'lg.reg_pass': '비밀번호(8자 이상)',
+      'lg.reg_pass2': '비밀번호 확인', 'lg.reg_btn': '계정 만들기',
+      'lg.err_bademail': '로그인 ID는 이메일이어야 해요(예: shop@mail.com).',
+      'lg.err_exists': '이미 가입된 이메일이에요 — 로그인하거나 다른 이메일을 사용해 주세요.',
+      'lg.err_nomatch': '비밀번호가 서로 일치하지 않아요.',,
     },
     hi: {
       'lg.sub': 'स्वचालित बिक्री — संचालन के लिए लॉग इन करें',
@@ -154,6 +193,13 @@
       'lg.err_prefix': 'त्रुटि: ', 'lg.err_weak': 'पासवर्ड कम से कम 8 अक्षर का होना चाहिए।',
       'lg.err_token': 'रीसेट कोड अमान्य या समाप्त हो गया।',
       'lg.ok_reset': 'पासवर्ड बदल गया — कृपया दोबारा लॉग इन करें।',
+      'lg.no_acc': 'अभी खाता नहीं है?', 'lg.reg_link': 'साइन अप करें',
+      'lg.reg_shop': 'दुकान का नाम', 'lg.reg_shop_ph': 'उदा: सेंट दुकान',
+      'lg.reg_id': 'लॉगिन आईडी (ईमेल)', 'lg.reg_pass': 'पासवर्ड (कम से कम 8 अक्षर)',
+      'lg.reg_pass2': 'पासवर्ड दोबारा दर्ज करें', 'lg.reg_btn': 'खाता बनाएँ',
+      'lg.err_bademail': 'लॉगिन आईडी ईमेल होनी चाहिए (उदा: shop@mail.com)।',
+      'lg.err_exists': 'यह ईमेल पहले से पंजीकृत है — लॉग इन करें या दूसरा ईमेल इस्तेमाल करें।',
+      'lg.err_nomatch': 'दोनों पासवर्ड मेल नहीं खाते।',,
     },
     ja: {
       'lg.sub': '販売自動化 — ログインして運営',
@@ -170,6 +216,13 @@
       'lg.err_prefix': 'エラー: ', 'lg.err_weak': 'パスワードは8文字以上にしてください。',
       'lg.err_token': 'リセットコードが無効か期限切れです。',
       'lg.ok_reset': 'パスワードを変更しました — もう一度ログインしてください。',
+      'lg.no_acc': 'アカウントをお持ちでない方', 'lg.reg_link': '新規登録',
+      'lg.reg_shop': '店舗名', 'lg.reg_shop_ph': '例:アロマショップ',
+      'lg.reg_id': 'ログインID(メール)', 'lg.reg_pass': 'パスワード(8文字以上)',
+      'lg.reg_pass2': 'パスワード(確認)', 'lg.reg_btn': 'アカウント作成',
+      'lg.err_bademail': 'ログインIDはメールアドレスにしてください(例:shop@mail.com)。',
+      'lg.err_exists': 'このメールは既に登録済みです — ログインするか別のメールをご利用ください。',
+      'lg.err_nomatch': 'パスワードが一致しません。',,
     },
   };
   function cur() {
@@ -223,6 +276,27 @@ $('#btnLogin').addEventListener('click', async () => {
 $('#password').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnLogin').click(); });
 $('#linkForgot').addEventListener('click', () => { $('#loginBox').style.display = 'none'; $('#resetBox').style.display = 'block'; err(''); });
 $('#linkBack').addEventListener('click', () => { $('#loginBox').style.display = 'block'; $('#resetBox').style.display = 'none'; err(''); });
+$('#linkRegister').addEventListener('click', () => { $('#loginBox').style.display = 'none'; $('#regBox').style.display = 'block'; $('#gEmail').focus(); err(''); });
+$('#linkRegBack').addEventListener('click', () => { $('#loginBox').style.display = 'block'; $('#regBox').style.display = 'none'; err(''); });
+$('#btnRegister').addEventListener('click', async () => {
+  err('');
+  const email = $('#gEmail').value.trim(), pass = $('#gPass').value, pass2 = $('#gPass2').value;
+  if (pass.length < 8) { err(t('lg.err_weak')); return; }
+  if (pass !== pass2) { err(t('lg.err_nomatch')); return; }
+  const b = $('#btnRegister'); b.disabled = true;
+  const r = await post('/api/auth/register', { email, password: pass, shop_name: $('#gShop').value.trim() });
+  b.disabled = false;
+  if (!r.ok) {
+    const map = {
+      RATE_LIMITED: t('lg.err_rate'), BAD_EMAIL: t('lg.err_bademail'), WEAK_PASSWORD: t('lg.err_weak'),
+      EMAIL_EXISTS: t('lg.err_exists'),
+    };
+    err(map[r.j.error] || (t('lg.err_prefix') + (r.j.error || '')));
+    return;
+  }
+  location.href = '/';
+});
+$('#gPass2').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnRegister').click(); });
 $('#btnForgot').addEventListener('click', async () => {
   err('');
   const r = await post('/api/auth/forgot', { email: $('#rEmail').value.trim() });

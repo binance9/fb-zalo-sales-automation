@@ -21,6 +21,7 @@ const ROLES = ['OWNER', 'ADMIN', 'AGENT'];
 const SESSION_TTL_MS = 7 * 24 * 3600 * 1000; // 7 ngày
 const RESET_TTL_MS = 30 * 60 * 1000;         // token reset sống 30 phút
 const LOGIN_RATE = { max: 5, windowMs: 60 * 1000 }; // 5 lần/phút/IP
+const REGISTER_RATE = { max: 3, windowMs: 10 * 60 * 1000 }; // 3 đăng ký/10 phút/IP
 const MIN_PASSWORD_LEN = 8;
 
 function sha256(s) { return crypto.createHash('sha256').update(String(s)).digest('hex'); }
@@ -63,6 +64,7 @@ class Auth {
     this.sessions = this._load(this.sessionsFile, {});
     this.resets = this._load(this.resetsFile, {});
     this.loginAttempts = new Map(); // ip -> {count, windowStart} — in-memory, reset khi restart
+    this.regAttempts = new Map();   // ip -> {count, windowStart} — limiter ĐĂNG KÝ (3 lần/10 phút)
     this._sweepSessions();
   }
 
@@ -169,6 +171,43 @@ class Auth {
   listUsers(actor) {
     if (!actor || (actor.role !== 'OWNER' && actor.role !== 'ADMIN')) throw new AuthError('FORBIDDEN', 403);
     return this.users.map(u => this._publicUser(u));
+  }
+
+  // ĐĂNG KÝ MỚI (tab "Đăng ký" trang login): ai cũng tự tạo được tài khoản, mỗi
+  // tài khoản 1 SHOP RIÊNG (mô hình SaaS — user mới là OWNER shop của họ, không
+  // đụng shop có sẵn). Rate-limit riêng 3 lần/10 phút/IP, fail-closed như login.
+  register({ email, password, shop_name, ip } = {}) {
+    const key = String(ip || 'unknown');
+    try {
+      const now = Date.now();
+      let st = this.regAttempts.get(key);
+      if (!st || now - st.windowStart > REGISTER_RATE.windowMs) {
+        st = { count: 0, windowStart: now };
+        this.regAttempts.set(key, st);
+      }
+      if (st.count >= REGISTER_RATE.max) throw new AuthError('RATE_LIMITED', 429);
+      if (!validEmail(email)) throw new AuthError('BAD_EMAIL', 400);
+      if (!validPassword(password)) throw new AuthError('WEAK_PASSWORD', 400);
+      if (this.findUserByEmail(email)) throw new AuthError('EMAIL_EXISTS', 409);
+      st.count += 1; // đếm cả lần hợp lệ — chặn spam đăng ký hàng loạt
+      const shop = this.createShop(String(shop_name || '').trim() || ('Cửa hàng ' + String(email).split('@')[0]));
+      const salt = crypto.randomBytes(16).toString('hex');
+      const user = {
+        user_id: 'usr_' + crypto.randomBytes(8).toString('hex'),
+        email: String(email).trim().toLowerCase(),
+        salt,
+        passwordHash: hashPassword(password, salt),
+        role: 'OWNER',
+        shop_id: shop.shop_id,
+        created_at: new Date().toISOString(),
+      };
+      this.users.push(user);
+      this.saveUsers();
+      return { user: this._publicUser(user), shop: { shop_id: shop.shop_id, name: shop.name } };
+    } catch (e) {
+      if (e instanceof AuthError) throw e;
+      throw new AuthError('RATE_LIMITED', 429); // fail-closed: lỗi limiter -> từ chối
+    }
   }
 
   // ------------------------------------------------------------ login/logout

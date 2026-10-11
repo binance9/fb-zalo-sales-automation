@@ -1717,6 +1717,18 @@ function createServer(opts = {}) {
           throw e;
         }
       }
+      if (p === '/api/auth/register' && req.method === 'POST') {
+        const body = await readJsonBody(req);
+        try {
+          const r = auth.register({ email: body.email, password: body.password, shop_name: body.shop_name, ip: req.socket.remoteAddress });
+          const login = auth.login({ email: body.email, password: body.password, ip: req.socket.remoteAddress });
+          setSessionCookie(res, login.token);
+          return sendJson(res, 200, { ok: true, user: r.user, shop: r.shop });
+        } catch (e) {
+          if (e instanceof AuthError) return sendJson(res, e.http, { ok: false, error: e.code });
+          throw e;
+        }
+      }
       if (p === '/api/auth/logout' && req.method === 'POST') {
         const cookies = parseCookies(req);
         auth.logout(cookies.sid);
